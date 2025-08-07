@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "703308822913",
+    "project_id": "zamankumandasi",
+    "storage_bucket": "zamankumandasi.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:703308822913:android:237105232f4cd03084d080",
+        "android_client_info": {
+          "package_name": "com.example.zamankumandasi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1-6lq9pWqDJY8_Gvp1K905ymwuwVQl5Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

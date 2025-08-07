@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginFragment">
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.example.zamankumandasi.ui.auth.LoginFragment"
+        android:label="Giriş"
+        tools:layout="@layout/fragment_login">
+        
+        <action
+            android:id="@+id/action_loginFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+            
+        <action
+            android:id="@+id/action_loginFragment_to_parentDashboardFragment"
+            app:destination="@id/parentDashboardFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+            
+        <action
+            android:id="@+id/action_loginFragment_to_pairingFragment"
+            app:destination="@id/pairingFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+            
+        <action
+            android:id="@+id/action_loginFragment_to_childDashboardFragment"
+            app:destination="@id/childDashboardFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.example.zamankumandasi.ui.auth.RegisterFragment"
+        android:label="Kayıt"
+        tools:layout="@layout/fragment_register">
+        
+        <action
+            android:id="@+id/action_registerFragment_to_parentDashboardFragment"
+            app:destination="@id/parentDashboardFragment"
+            app:popUpTo="@id/registerFragment"
+            app:popUpToInclusive="true" />
+            
+        <action
+            android:id="@+id/action_registerFragment_to_pairingFragment"
+            app:destination="@id/pairingFragment"
+            app:popUpTo="@id/registerFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/pairingFragment"
+        android:name="com.example.zamankumandasi.ui.auth.PairingFragment"
+        android:label="Eşleştirme"
+        tools:layout="@layout/fragment_pairing">
+        
+        <action
+            android:id="@+id/action_pairingFragment_to_childDashboardFragment"
+            app:destination="@id/childDashboardFragment"
+            app:popUpTo="@id/pairingFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/parentDashboardFragment"
+        android:name="com.example.zamankumandasi.ui.parent.ParentDashboardFragment"
+        android:label="Ebeveyn Paneli"
+        tools:layout="@layout/fragment_parent_dashboard">
+        
+        <action
+            android:id="@+id/action_parentDashboardFragment_to_appSettingsFragment"
+            app:destination="@id/appSettingsFragment" />
+            
+        <action
+            android:id="@+id/action_parentDashboardFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/childDashboardFragment"
+        android:name="com.example.zamankumandasi.ui.child.ChildDashboardFragment"
+        android:label="Çocuk Paneli"
+        tools:layout="@layout/fragment_child_dashboard">
+        
+        <action
+            android:id="@+id/action_childDashboardFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/appSettingsFragment"
+        android:name="com.example.zamankumandasi.ui.parent.AppSettingsFragment"
+        android:label="Uygulama Ayarları"
+        tools:layout="@layout/fragment_app_settings" />
+
+</navigation>
