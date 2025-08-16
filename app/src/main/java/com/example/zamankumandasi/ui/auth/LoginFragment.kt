@@ -37,6 +37,13 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        // Otomatik giriş kontrolü
+        authViewModel.currentUser.observe(viewLifecycleOwner) { user ->
+            user?.let {
+                navigateBasedOnUserType(it)
+            }
+        }
+
         setupViews()
         observeAuthState()
     }
