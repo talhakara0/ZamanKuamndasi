@@ -39,8 +39,8 @@ class LoginFragment : Fragment() {
         
         // Otomatik giriş kontrolü
         authViewModel.currentUser.observe(viewLifecycleOwner) { user ->
-            user?.let {
-                navigateBasedOnUserType(it)
+            if (user != null && findNavController().currentDestination?.id == R.id.loginFragment) {
+                navigateBasedOnUserType(user)
             }
         }
 

@@ -127,6 +127,16 @@ class AppUsageViewModel @Inject constructor(
         }
     }
 
+    fun saveAppUsage(appUsage: AppUsage) {
+        viewModelScope.launch {
+            try {
+                appUsageRepository.saveAppUsage(appUsage)
+            } catch (e: Exception) {
+                _error.value = "Kullanım verisi kaydedilirken hata: ${e.message}"
+            }
+        }
+    }
+
     fun clearError() {
         _error.value = null
     }

@@ -21,6 +21,7 @@ class AuthRepository @Inject constructor(
                 id = result.user?.uid ?: "",
                 email = email,
                 userType = userType,
+                parentId = if (userType == UserType.PARENT) null else null, // Ebeveyn için parentId null olarak ekleniyor
                 pairingCode = if (userType == UserType.PARENT) generatePairingCode() else null
             )
             

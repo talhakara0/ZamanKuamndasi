@@ -51,13 +51,37 @@ class ChildDashboardFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        Log.d("talha", "ChildDashboardFragment açıldı")
+
         setHasOptionsMenu(true)
         setupViews()
         setupRecyclerView()
         observeCurrentUser()
         observeAppUsage()
 
+        // Çıkış butonu popup ile
+        binding.btnLogout.setOnClickListener {
+            Log.d("talha", "Çıkış butonuna tıklandı")
+            android.app.AlertDialog.Builder(requireContext())
+                .setTitle("Çıkış Yap")
+                .setMessage("Çıkış yapmak istediğinize emin misiniz?")
+                .setPositiveButton("Evet") { _, _ ->
+                    Log.d("talha", "Çıkış onaylandı, çıkış yapılıyor")
+                    authViewModel.signOut()
+                    findNavController().navigate(
+                        R.id.action_childDashboardFragment_to_loginFragment,
+                        null,
+                        androidx.navigation.NavOptions.Builder()
+                            .setPopUpTo(R.id.loginFragment, true)
+                            .build()
+                    )
+                }
+                .setNegativeButton("Hayır", null)
+                .show()
+        }
+
         if (!hasUsageStatsPermission(requireContext())) {
+            Log.d("talha", "Kullanım izni yok, ayarlara yönlendiriliyor")
             val intent = Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
@@ -67,6 +91,7 @@ class ChildDashboardFragment : Fragment() {
                 Toast.LENGTH_LONG
             ).show()
         } else {
+            Log.d("talha", "Kullanım izni var, servis başlatılıyor")
             startAppUsageService()
         }
     }
@@ -93,15 +118,11 @@ class ChildDashboardFragment : Fragment() {
 
     private fun observeCurrentUser() {
         authViewModel.currentUser.observe(viewLifecycleOwner) { user ->
+            Log.d("talha", "observeCurrentUser: user = $user")
             user?.let {
                 binding.tvUserEmail.text = it.email
                 binding.tvParentInfo.text = "Ebeveyn ID: ${it.parentId ?: "Henüz eşleştirilmedi"}"
-
-                // Kullanım verilerini yükle
                 appUsageViewModel.loadAppUsageByUser(it.id)
-
-                // Manuel kontrol
-                checkAndLoadUsageData()
             }
         }
     }
@@ -110,6 +131,7 @@ class ChildDashboardFragment : Fragment() {
      * QueryEvents tabanlı kullanım ölçümü
      */
     private fun checkAndLoadUsageData() {
+        Log.d("talha", "Yenile butonuna basıldı, usage verisi toplanıyor")
         val usageStatsManager =
             requireContext().getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
 
@@ -146,6 +168,27 @@ class ChildDashboardFragment : Fragment() {
                 usedTime = dur
             )
         }
+
+        // 🔹 RTDB'ye yaz (her uygulama için)
+        authViewModel.currentUser.value?.let { user ->
+            usageList.forEach { appUsage ->
+                val safePackageName = appUsage.packageName.replace(".", "_")
+                val appUsageToSave = appUsage.copy(
+                    userId = user.id,
+                    id = "${user.id}_$safePackageName",
+                    lastUsed = System.currentTimeMillis()
+                )
+                Log.d("talha", "Firebase'e yazılıyor: $appUsageToSave")
+                lifecycleScope.launch {
+                    try {
+                        appUsageViewModel.saveAppUsage(appUsageToSave)
+                        Log.d("talha", "Firebase'e yazma başarılı: ${appUsageToSave.id}")
+                    } catch (e: Exception) {
+                        Log.e("talha", "Firebase'e yazma hatası: ${e.message}")
+                    }
+                }
+            }
+        } ?: Log.e("talha", "Kullanıcı null, Firebase'e yazılamadı!")
 
         // Kullanım süresine göre azalan şekilde sırala
         val sortedUsageList = usageList.sortedByDescending { it.usedTime }
@@ -193,7 +236,13 @@ class ChildDashboardFragment : Fragment() {
         return when (item.itemId) {
             R.id.action_logout -> {
                 authViewModel.signOut()
-                findNavController().navigate(R.id.action_childDashboardFragment_to_loginFragment)
+                findNavController().navigate(
+                    R.id.action_childDashboardFragment_to_loginFragment,
+                    null,
+                    androidx.navigation.NavOptions.Builder()
+                        .setPopUpTo(R.id.loginFragment, true)
+                        .build()
+                )
                 true
             }
 

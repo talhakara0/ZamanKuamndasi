@@ -61,7 +61,12 @@ class ParentDashboardFragment : Fragment() {
     private fun setupRecyclerView() {
         childrenAdapter = ChildrenAdapter(
             onChildClick = { child ->
-                // Çocuk detayına git
+                // Çocuk detayına git (kullanım verisi)
+                val bundle = android.os.Bundle().apply {
+                    putString("childId", child.id)
+                    putString("childEmail", child.email)
+                }
+                findNavController().navigate(R.id.action_parentDashboardFragment_to_childUsageDetailFragment, bundle)
             },
             onManageAppsClick = { child ->
                 // Çocuğun uygulamalarını yönet
@@ -82,7 +87,7 @@ class ParentDashboardFragment : Fragment() {
             user?.let {
                 binding.tvUserEmail.text = it.email
                 binding.tvPairingCode.text = "Eşleştirme Kodu: ${it.pairingCode}"
-                
+                android.util.Log.d("ParentDashboard", "Ebeveyn id: ${it.id}, email: ${it.email}")
                 // Eğer ebeveyn ise çocuklarını yükle
                 if (it.userType == UserType.PARENT) {
                     authViewModel.loadChildren(it.id)
@@ -93,16 +98,15 @@ class ParentDashboardFragment : Fragment() {
     
     private fun observeChildren() {
         authViewModel.children.observe(viewLifecycleOwner) { children ->
+            android.util.Log.d("ParentDashboard", "Yüklenen çocuk sayısı: ${children.size}")
+            children.forEach { child ->
+                android.util.Log.d("ParentDashboard", "Çocuk: ${child.email}, parentId: ${child.parentId}")
+            }
             if (children.isNotEmpty()) {
                 binding.tvNoChildren.visibility = View.GONE
                 childrenAdapter.submitList(children)
-                println("Çocuklar yüklendi: ${children.size} çocuk")
-                children.forEach { child ->
-                    println("Çocuk: ${child.email}")
-                }
             } else {
                 binding.tvNoChildren.visibility = View.VISIBLE
-                println("Çocuk bulunamadı")
             }
         }
     }

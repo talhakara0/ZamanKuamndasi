@@ -67,6 +67,12 @@
     </fragment>
 
     <fragment
+        android:id="@+id/childUsageDetailFragment"
+        android:name="com.example.zamankumandasi.ui.parent.ChildUsageDetailFragment"
+        android:label="Çocuk Kullanım Detayı"
+        tools:layout="@layout/fragment_child_usage_detail" />
+
+    <fragment
         android:id="@+id/parentDashboardFragment"
         android:name="com.example.zamankumandasi.ui.parent.ParentDashboardFragment"
         android:label="Ebeveyn Paneli"
@@ -81,6 +87,10 @@
             app:destination="@id/loginFragment"
             app:popUpTo="@id/loginFragment"
             app:popUpToInclusive="true" />
+
+        <action
+            android:id="@+id/action_parentDashboardFragment_to_childUsageDetailFragment"
+            app:destination="@id/childUsageDetailFragment" />
     </fragment>
 
     <fragment
