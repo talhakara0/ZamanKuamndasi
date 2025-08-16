@@ -103,6 +103,29 @@ class AppUsageViewModel @Inject constructor(
             }
         }
     }
+    
+    fun updateDailyLimit(userId: String, packageName: String, dailyLimit: Long) {
+        _loading.value = true
+        _error.value = null
+        
+        viewModelScope.launch {
+            try {
+                val result = appUsageRepository.updateDailyLimit(userId, packageName, dailyLimit)
+                result.fold(
+                    onSuccess = {
+                        loadAppUsageByUser(userId)
+                    },
+                    onFailure = { exception ->
+                        _error.value = exception.message ?: "Limit güncellenirken hata oluştu"
+                    }
+                )
+            } catch (e: Exception) {
+                _error.value = "Limit güncellenirken hata: ${e.message}"
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
 
     fun clearError() {
         _error.value = null

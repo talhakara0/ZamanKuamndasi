@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import com.example.zamankumandasi.data.model.AppInfo
 import com.example.zamankumandasi.data.model.AppUsage
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
 import java.util.*
 import javax.inject.Inject
@@ -13,7 +13,7 @@ import javax.inject.Singleton
 
 @Singleton
 class AppUsageRepository @Inject constructor(
-    private val firestore: FirebaseFirestore,
+    private val database: FirebaseDatabase,
     private val context: Context
 ) {
     
@@ -46,30 +46,21 @@ class AppUsageRepository @Inject constructor(
     }
     
     suspend fun saveAppUsage(appUsage: AppUsage) {
-        firestore.collection("app_usage").document(appUsage.id).set(appUsage).await()
+        database.reference.child("app_usage").child(appUsage.id).setValue(appUsage).await()
     }
     
     suspend fun getAppUsageByUser(userId: String): List<AppUsage> {
-        val snapshot = firestore.collection("app_usage")
-            .whereEqualTo("userId", userId)
-            .get().await()
-        
-        return snapshot.documents.mapNotNull { doc ->
-            doc.toObject(AppUsage::class.java)
-        }
+        val snapshot = database.reference.child("app_usage").orderByChild("userId").equalTo(userId).get().await()
+        return snapshot.children.mapNotNull { it.getValue(AppUsage::class.java) }
     }
     
     suspend fun updateAppUsage(appUsage: AppUsage) {
-        firestore.collection("app_usage").document(appUsage.id).set(appUsage).await()
+        database.reference.child("app_usage").child(appUsage.id).setValue(appUsage).await()
     }
     
     suspend fun getAppUsageByPackage(userId: String, packageName: String): AppUsage? {
-        val snapshot = firestore.collection("app_usage")
-            .whereEqualTo("userId", userId)
-            .whereEqualTo("packageName", packageName)
-            .get().await()
-        
-        return snapshot.documents.firstOrNull()?.toObject(AppUsage::class.java)
+        val snapshot = database.reference.child("app_usage").orderByChild("userId").equalTo(userId).get().await()
+        return snapshot.children.mapNotNull { it.getValue(AppUsage::class.java) }.firstOrNull { it.packageName == packageName }
     }
     
     suspend fun setDailyLimit(userId: String, packageName: String, appName: String, limitInMinutes: Int) {
@@ -78,17 +69,50 @@ class AppUsageRepository @Inject constructor(
             userId = userId,
             packageName = packageName,
             appName = appName,
-            dailyLimit = limitInMinutes * 60 * 1000L // dakikayı milisaniyeye çevir
+            dailyLimit = limitInMinutes * 60 * 1000L
         )
-        
         saveAppUsage(appUsage)
+    }
+    
+    suspend fun updateDailyLimit(userId: String, packageName: String, dailyLimit: Long): Result<Unit> {
+        return try {
+            val existingUsage = getAppUsageByPackage(userId, packageName)
+            if (existingUsage != null) {
+                val updatedUsage = existingUsage.copy(
+                    dailyLimit = dailyLimit,
+                    isBlocked = existingUsage.usedTime >= dailyLimit && dailyLimit > 0
+                )
+                database.reference.child("app_usage").child(existingUsage.id).setValue(updatedUsage).await()
+            } else {
+                val packageManager = context.packageManager
+                val appName = try {
+                    packageManager.getApplicationLabel(
+                        packageManager.getApplicationInfo(packageName, 0)
+                    ).toString()
+                } catch (e: Exception) {
+                    packageName
+                }
+                val newUsage = AppUsage(
+                    id = "${userId}_${packageName}",
+                    userId = userId,
+                    packageName = packageName,
+                    appName = appName,
+                    dailyLimit = dailyLimit,
+                    usedTime = 0,
+                    lastUsed = System.currentTimeMillis(),
+                    isBlocked = false
+                )
+                database.reference.child("app_usage").child(newUsage.id).setValue(newUsage).await()
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
     
     suspend fun updateUsedTime(userId: String, packageName: String, usedTime: Long) {
         val existingUsage = getAppUsageByPackage(userId, packageName)
-        
         if (existingUsage != null) {
-            // Mevcut kullanım süresine ekle
             val updatedUsage = existingUsage.copy(
                 usedTime = existingUsage.usedTime + usedTime,
                 lastUsed = System.currentTimeMillis(),
@@ -96,7 +120,6 @@ class AppUsageRepository @Inject constructor(
             )
             updateAppUsage(updatedUsage)
         } else {
-            // Yeni kullanım kaydı oluştur
             val packageManager = context.packageManager
             val appName = try {
                 packageManager.getApplicationLabel(
@@ -105,14 +128,13 @@ class AppUsageRepository @Inject constructor(
             } catch (e: Exception) {
                 packageName
             }
-            
             val newUsage = AppUsage(
                 id = "${userId}_${packageName}",
                 userId = userId,
                 packageName = packageName,
                 appName = appName,
                 usedTime = usedTime,
-                dailyLimit = 0, // Henüz limit yok
+                dailyLimit = 0,
                 lastUsed = System.currentTimeMillis(),
                 isBlocked = false
             )
@@ -122,7 +144,6 @@ class AppUsageRepository @Inject constructor(
     
     suspend fun resetDailyUsage(userId: String) {
         val userApps = getAppUsageByUser(userId)
-        
         userApps.forEach { appUsage ->
             val resetUsage = appUsage.copy(
                 usedTime = 0,

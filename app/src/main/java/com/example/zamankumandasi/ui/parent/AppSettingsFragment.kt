@@ -1,17 +1,23 @@
 package com.example.zamankumandasi.ui.parent
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.zamankumandasi.R
 import com.example.zamankumandasi.databinding.FragmentAppSettingsBinding
 import com.example.zamankumandasi.ui.adapter.AppListAdapter
 import com.example.zamankumandasi.ui.viewmodel.AppUsageViewModel
+import com.example.zamankumandasi.ui.viewmodel.AuthViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -22,6 +28,7 @@ class AppSettingsFragment : Fragment() {
     private val binding get() = _binding!!
     
     private val appUsageViewModel: AppUsageViewModel by viewModels()
+    private val authViewModel: AuthViewModel by viewModels()
     private lateinit var appListAdapter: AppListAdapter
 
     override fun onCreateView(
@@ -39,6 +46,7 @@ class AppSettingsFragment : Fragment() {
         setupViews()
         setupRecyclerView()
         observeAppUsage()
+        observeChildren()
         loadInstalledApps()
     }
 
@@ -65,8 +73,74 @@ class AppSettingsFragment : Fragment() {
     }
 
     private fun showSetLimitDialog(packageName: String, appName: String) {
-        // TODO: Süre belirleme dialog'u göster
-        // appUsageViewModel.setDailyLimit(packageName, limitInMillis)
+        // Önce çocuk seçimi dialog'u göster
+        showChildSelectionDialog { selectedChild ->
+            // Çocuk seçildikten sonra limit dialog'u göster
+            showLimitDialog(packageName, appName, selectedChild)
+        }
+    }
+    
+    private fun showChildSelectionDialog(onChildSelected: (String) -> Unit) {
+        val children = authViewModel.children.value ?: emptyList()
+        
+        if (children.isEmpty()) {
+            // Çocuk yoksa uyarı göster
+            AlertDialog.Builder(requireContext())
+                .setTitle("Uyarı")
+                .setMessage("Henüz bağlı çocuk bulunmuyor. Önce çocuk ekleyin.")
+                .setPositiveButton("Tamam", null)
+                .show()
+            return
+        }
+        
+        val childNames = children.map { it.email }.toTypedArray()
+        val childIds = children.map { it.id }
+        
+        AlertDialog.Builder(requireContext())
+            .setTitle("Çocuk Seçin")
+            .setItems(childNames) { _, which ->
+                val selectedChildId = childIds[which]
+                onChildSelected(selectedChildId)
+            }
+            .setNegativeButton("İptal", null)
+            .show()
+    }
+    
+    private fun showLimitDialog(packageName: String, appName: String, childId: String) {
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_set_app_limit, null)
+        
+        val tvAppName = dialogView.findViewById<TextView>(R.id.tvAppName)
+        val etLimitHours = dialogView.findViewById<EditText>(R.id.etLimitHours)
+        val etLimitMinutes = dialogView.findViewById<EditText>(R.id.etLimitMinutes)
+        val btnCancel = dialogView.findViewById<Button>(R.id.btnCancel)
+        val btnSave = dialogView.findViewById<Button>(R.id.btnSave)
+        
+        tvAppName.text = "$appName (${authViewModel.children.value?.find { it.id == childId }?.email ?: "Bilinmeyen"})"
+        
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+        
+        btnCancel.setOnClickListener {
+            dialog.dismiss()
+        }
+        
+        btnSave.setOnClickListener {
+            val hours = etLimitHours.text.toString().toIntOrNull() ?: 0
+            val minutes = etLimitMinutes.text.toString().toIntOrNull() ?: 0
+            val totalMinutes = hours * 60 + minutes
+            
+            appUsageViewModel.updateDailyLimit(
+                userId = childId,
+                packageName = packageName,
+                dailyLimit = totalMinutes * 60 * 1000L // dakikayı milisaniyeye çevir
+            )
+            
+            dialog.dismiss()
+        }
+        
+        dialog.show()
     }
 
     private fun loadInstalledApps() {
@@ -90,6 +164,15 @@ class AppSettingsFragment : Fragment() {
         appUsageViewModel.error.observe(viewLifecycleOwner) { error ->
             error?.let {
                 // TODO: Hata mesajını göster
+            }
+        }
+    }
+    
+    private fun observeChildren() {
+        authViewModel.children.observe(viewLifecycleOwner) { children ->
+            println("Çocuklar yüklendi: ${children.size} çocuk")
+            children.forEach { child ->
+                println("Çocuk: ${child.email} (ID: ${child.id})")
             }
         }
     }

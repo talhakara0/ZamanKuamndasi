@@ -2,7 +2,7 @@ package com.example.zamankumandasi.di
 
 import android.content.Context
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.FirebaseDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,8 +22,8 @@ object AppModule {
     
     @Provides
     @Singleton
-    fun provideFirebaseFirestore(): FirebaseFirestore {
-        return FirebaseFirestore.getInstance()
+    fun provideFirebaseDatabase(): FirebaseDatabase {
+        return FirebaseDatabase.getInstance()
     }
     
     @Provides
