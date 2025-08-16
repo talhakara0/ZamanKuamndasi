@@ -147,9 +147,12 @@ class ChildDashboardFragment : Fragment() {
             )
         }
 
+        // Kullanım süresine göre azalan şekilde sırala
+        val sortedUsageList = usageList.sortedByDescending { it.usedTime }
+
         // Ana thread’de adapter’e bas
         activity?.runOnUiThread {
-            appUsageAdapter.submitList(usageList)
+            appUsageAdapter.submitList(sortedUsageList)
         }
     }
 
