@@ -66,8 +66,14 @@ class AppUsageAdapter(
                     tvStatus.setTextColor(binding.root.context.getColor(android.R.color.holo_green_dark))
                 }
                 
-                // Uygulama ikonunu yükle (placeholder için)
-                ivAppIcon.setImageResource(android.R.drawable.ic_menu_manage)
+                // Uygulama ikonunu yükle (gerçek ikon)
+                val pm = binding.root.context.packageManager
+                try {
+                    val icon = pm.getApplicationIcon(appUsage.packageName)
+                    ivAppIcon.setImageDrawable(icon)
+                } catch (e: Exception) {
+                    ivAppIcon.setImageResource(android.R.drawable.ic_menu_manage)
+                }
                 
                 root.setOnClickListener {
                     onAppClick(appUsage)

@@ -34,14 +34,17 @@ class AppListAdapter(
             binding.apply {
                 tvAppName.text = app.appName
                 tvPackageName.text = app.packageName
-                
-                // Uygulama ikonunu yükle (placeholder için)
-                ivAppIcon.setImageResource(android.R.drawable.ic_menu_manage)
-                
+                // Uygulama ikonunu yükle (gerçek ikon)
+                val pm = binding.root.context.packageManager
+                try {
+                    val icon = pm.getApplicationIcon(app.packageName)
+                    ivAppIcon.setImageDrawable(icon)
+                } catch (e: Exception) {
+                    ivAppIcon.setImageResource(android.R.drawable.ic_menu_manage)
+                }
                 btnSetLimit.setOnClickListener {
                     onSetLimitClick(app)
                 }
-                
                 root.setOnClickListener {
                     onAppClick(app)
                 }
