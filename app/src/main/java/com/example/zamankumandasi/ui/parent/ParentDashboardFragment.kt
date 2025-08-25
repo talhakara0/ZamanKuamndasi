@@ -7,18 +7,22 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.zamankumandasi.R
+import com.example.zamankumandasi.data.manager.LogoutManager
 import com.example.zamankumandasi.data.model.UserType
 import com.example.zamankumandasi.databinding.FragmentParentDashboardBinding
 import com.example.zamankumandasi.ui.adapter.ChildrenAdapter
 import com.example.zamankumandasi.ui.viewmodel.AuthViewModel
+import com.example.zamankumandasi.utils.performLogoutWithManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class ParentDashboardFragment : Fragment() {
@@ -28,6 +32,9 @@ class ParentDashboardFragment : Fragment() {
     
     private val authViewModel: AuthViewModel by viewModels()
     private lateinit var childrenAdapter: ChildrenAdapter
+    
+    @Inject
+    lateinit var logoutManager: LogoutManager
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -119,8 +126,7 @@ class ParentDashboardFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_logout -> {
-                authViewModel.signOut()
-                findNavController().navigate(R.id.action_parentDashboardFragment_to_loginFragment)
+                performLogoutWithManager(authViewModel, logoutManager)
                 true
             }
             else -> super.onOptionsItemSelected(item)

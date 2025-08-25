@@ -14,8 +14,10 @@ import com.example.zamankumandasi.data.model.User
 import com.example.zamankumandasi.data.model.UserType
 import com.example.zamankumandasi.databinding.FragmentLoginBinding
 import com.example.zamankumandasi.ui.viewmodel.AuthViewModel
+import com.example.zamankumandasi.utils.NetworkUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class LoginFragment : Fragment() {
@@ -24,6 +26,9 @@ class LoginFragment : Fragment() {
     private val binding get() = _binding!!
     
     private val authViewModel: AuthViewModel by viewModels()
+    
+    @Inject
+    lateinit var networkUtils: NetworkUtils
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -37,18 +42,17 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        // Otomatik giriş kontrolü
-        authViewModel.currentUser.observe(viewLifecycleOwner) { user ->
-            if (user != null && findNavController().currentDestination?.id == R.id.loginFragment) {
-                navigateBasedOnUserType(user)
-            }
-        }
-
+        // MainActivity'de otomatik giriş kontrolü yapılıyor
+        // Burada sadece UI setup yapıyoruz
+        
         setupViews()
         observeAuthState()
     }
 
     private fun setupViews() {
+        // Network durumunu göster
+        checkNetworkStatus()
+        
         binding.btnLogin.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString().trim()
@@ -60,6 +64,26 @@ class LoginFragment : Fragment() {
         
         binding.btnRegister.setOnClickListener {
             findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
+        }
+    }
+    
+    private fun checkNetworkStatus() {
+        val isOnline = networkUtils.isNetworkAvailable()
+        val hasConnection = networkUtils.hasNetworkConnection()
+        
+        android.util.Log.d("LoginFragment", "Network status - Advanced: $isOnline, Simple: $hasConnection")
+        android.util.Log.d("LoginFragment", "Network details:\n${networkUtils.getDetailedNetworkInfo()}")
+        
+        if (!hasConnection) {
+            Toast.makeText(context, 
+                "📶 İnternet bağlantısı bulunamadı - Offline modda çalışıyor", 
+                Toast.LENGTH_LONG).show()
+        } else if (!isOnline) {
+            Toast.makeText(context, 
+                "📶 Bağlantı var ama internet erişimi sınırlı - Offline modda çalışıyor", 
+                Toast.LENGTH_LONG).show()
+        } else {
+            android.util.Log.d("LoginFragment", "Network: Online - Internet bağlantısı mevcut")
         }
     }
 
@@ -94,7 +118,10 @@ class LoginFragment : Fragment() {
                     binding.progressBar.visibility = View.GONE
                     binding.btnLogin.isEnabled = true
                     
-                    navigateBasedOnUserType(state.user)
+                    // Sadece LoginFragment'tayken navigate et
+                    if (findNavController().currentDestination?.id == R.id.loginFragment) {
+                        navigateBasedOnUserType(state.user)
+                    }
                 }
                 
                 is AuthViewModel.AuthState.Error -> {
@@ -112,18 +139,28 @@ class LoginFragment : Fragment() {
     }
 
     private fun navigateBasedOnUserType(user: User) {
-        when (user.userType) {
-            UserType.PARENT -> {
-                findNavController().navigate(R.id.action_loginFragment_to_parentDashboardFragment)
-            }
-            UserType.CHILD -> {
-                if (user.parentId == null) {
-                    // Çocuk henüz ebeveynle eşleştirilmemiş
-                    findNavController().navigate(R.id.action_loginFragment_to_pairingFragment)
-                } else {
-                    findNavController().navigate(R.id.action_loginFragment_to_childDashboardFragment)
+        // Sadece LoginFragment'tayken navigate et
+        if (findNavController().currentDestination?.id != R.id.loginFragment) {
+            return
+        }
+        
+        try {
+            when (user.userType) {
+                UserType.PARENT -> {
+                    findNavController().navigate(R.id.action_loginFragment_to_parentDashboardFragment)
+                }
+                UserType.CHILD -> {
+                    if (user.parentId == null) {
+                        // Çocuk henüz ebeveynle eşleştirilmemiş
+                        findNavController().navigate(R.id.action_loginFragment_to_pairingFragment)
+                    } else {
+                        findNavController().navigate(R.id.action_loginFragment_to_childDashboardFragment)
+                    }
                 }
             }
+        } catch (e: Exception) {
+            // Navigation hatası durumunda log at ve görmezden gel
+            android.util.Log.e("LoginFragment", "Navigation error: ${e.message}")
         }
     }
 

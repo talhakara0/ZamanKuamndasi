@@ -5,6 +5,7 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -18,16 +19,19 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.zamankumandasi.R
+import com.example.zamankumandasi.data.manager.LogoutManager
+import com.example.zamankumandasi.data.model.AppUsage
 import com.example.zamankumandasi.databinding.FragmentChildDashboardBinding
 import com.example.zamankumandasi.service.AppUsageService
 import com.example.zamankumandasi.ui.UsageAccessActivity
 import com.example.zamankumandasi.ui.adapter.AppUsageAdapter
-import com.example.zamankumandasi.ui.viewmodel.AuthViewModel
 import com.example.zamankumandasi.ui.viewmodel.AppUsageViewModel
+import com.example.zamankumandasi.ui.viewmodel.AuthViewModel
+import com.example.zamankumandasi.utils.NetworkUtils
+import com.example.zamankumandasi.utils.performLogoutWithManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import android.util.Log
-import com.example.zamankumandasi.data.model.AppUsage
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class ChildDashboardFragment : Fragment() {
@@ -38,6 +42,12 @@ class ChildDashboardFragment : Fragment() {
     private val authViewModel: AuthViewModel by viewModels()
     private val appUsageViewModel: AppUsageViewModel by viewModels()
     private lateinit var appUsageAdapter: AppUsageAdapter
+    
+    @Inject
+    lateinit var logoutManager: LogoutManager
+    
+    @Inject
+    lateinit var networkUtils: NetworkUtils
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -54,31 +64,11 @@ class ChildDashboardFragment : Fragment() {
         Log.d("talha", "ChildDashboardFragment açıldı")
 
         setHasOptionsMenu(true)
+        checkNetworkStatus()
         setupViews()
         setupRecyclerView()
         observeCurrentUser()
         observeAppUsage()
-
-        // Çıkış butonu popup ile
-        binding.btnLogout.setOnClickListener {
-            Log.d("talha", "Çıkış butonuna tıklandı")
-            android.app.AlertDialog.Builder(requireContext())
-                .setTitle("Çıkış Yap")
-                .setMessage("Çıkış yapmak istediğinize emin misiniz?")
-                .setPositiveButton("Evet") { _, _ ->
-                    Log.d("talha", "Çıkış onaylandı, çıkış yapılıyor")
-                    authViewModel.signOut()
-                    findNavController().navigate(
-                        R.id.action_childDashboardFragment_to_loginFragment,
-                        null,
-                        androidx.navigation.NavOptions.Builder()
-                            .setPopUpTo(R.id.loginFragment, true)
-                            .build()
-                    )
-                }
-                .setNegativeButton("Hayır", null)
-                .show()
-        }
 
         if (!hasUsageStatsPermission(requireContext())) {
             Log.d("talha", "Kullanım izni yok, ayarlara yönlendiriliyor")
@@ -97,9 +87,31 @@ class ChildDashboardFragment : Fragment() {
     }
 
     private fun setupViews() {
+        // Toolbar'ı Activity'ye set et
+        (requireActivity() as androidx.appcompat.app.AppCompatActivity).setSupportActionBar(binding.toolbar)
+        
         // Refresh butonu
         binding.btnRefresh.setOnClickListener {
             checkAndLoadUsageData()
+        }
+    }
+    
+    private fun checkNetworkStatus() {
+        val isOnline = networkUtils.isNetworkAvailable()
+        val hasConnection = networkUtils.hasNetworkConnection()
+        
+        android.util.Log.d("ChildDashboard", "Network status - Advanced: $isOnline, Simple: $hasConnection")
+        
+        if (!hasConnection) {
+            Toast.makeText(context, 
+                "📶 İnternet bağlantısı bulunamadı - Offline modda çalışıyor", 
+                Toast.LENGTH_LONG).show()
+        } else if (!isOnline) {
+            Toast.makeText(context, 
+                "📶 Bağlantı var ama internet erişimi sınırlı - Offline modda çalışıyor", 
+                Toast.LENGTH_LONG).show()
+        } else {
+            android.util.Log.d("ChildDashboard", "Network: Online - Internet bağlantısı mevcut")
         }
     }
 
@@ -228,21 +240,18 @@ class ChildDashboardFragment : Fragment() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        Log.d("talha", "ChildDashboard: Menu oluşturuluyor")
         inflater.inflate(R.menu.menu_child_dashboard, menu)
+        Log.d("talha", "ChildDashboard: Menu yüklendi, item sayısı: ${menu.size()}")
         super.onCreateOptionsMenu(menu, inflater)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        Log.d("talha", "ChildDashboard: Menu item tıklandı: ${item.itemId}")
         return when (item.itemId) {
             R.id.action_logout -> {
-                authViewModel.signOut()
-                findNavController().navigate(
-                    R.id.action_childDashboardFragment_to_loginFragment,
-                    null,
-                    androidx.navigation.NavOptions.Builder()
-                        .setPopUpTo(R.id.loginFragment, true)
-                        .build()
-                )
+                Log.d("talha", "ChildDashboard: Çıkış menu item seçildi")
+                performLogoutWithManager(authViewModel, logoutManager)
                 true
             }
 

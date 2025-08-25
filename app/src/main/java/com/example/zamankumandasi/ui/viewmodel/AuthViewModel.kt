@@ -66,11 +66,36 @@ class AuthViewModel @Inject constructor(
     }
 
     fun signOut() {
+        _authState.value = AuthState.Loading
+        
         viewModelScope.launch {
-            authRepository.signOut()
-            _currentUser.value = null
-            _authState.value = AuthState.SignedOut
+            try {
+                // 1. Repository'den çıkış yap
+                val result = authRepository.signOut()
+                
+                result.fold(
+                    onSuccess = {
+                        // 2. Tüm kullanıcı verilerini temizle
+                        clearUserData()
+                        
+                        // 3. State'i güncelle
+                        _authState.value = AuthState.SignedOut
+                    },
+                    onFailure = { exception ->
+                        _authState.value = AuthState.Error("Çıkış işlemi sırasında hata: ${exception.message}")
+                    }
+                )
+                
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error("Çıkış işlemi sırasında hata: ${e.message}")
+            }
         }
+    }
+    
+    private fun clearUserData() {
+        _currentUser.value = null
+        _children.value = emptyList()
+        // Diğer kullanıcı verilerini de temizle
     }
 
     fun pairWithParent(pairingCode: String) {
@@ -93,14 +118,23 @@ class AuthViewModel @Inject constructor(
 
     private fun checkCurrentUser() {
         viewModelScope.launch {
-            val user = authRepository.getCurrentUser()
-            _currentUser.value = user
-            
-            // Eğer ebeveyn ise çocuklarını yükle
-            user?.let { currentUser ->
-                if (currentUser.userType == UserType.PARENT) {
-                    loadChildren(currentUser.id)
+            try {
+                val user = authRepository.getCurrentUser()
+                _currentUser.value = user
+                
+                // Kullanıcı varsa AuthState'i Success yap (ama sadece ilk yüklemede)
+                if (user != null && _authState.value !is AuthState.Success) {
+                    _authState.value = AuthState.Success(user)
                 }
+                
+                // Eğer ebeveyn ise çocuklarını yükle
+                user?.let { currentUser ->
+                    if (currentUser.userType == UserType.PARENT) {
+                        loadChildren(currentUser.id)
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("AuthViewModel", "checkCurrentUser error: ${e.message}")
             }
         }
     }

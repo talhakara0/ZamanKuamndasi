@@ -8,6 +8,9 @@ Ebeveynlerin çocuklarının telefon kullanımını kontrol etmelerini sağlayan
 - Firebase Authentication ile e-posta/şifre kayıt ve giriş
 - Ebeveyn ve çocuk hesap türleri
 - Eşleştirme kodu ile ebeveyn-çocuk bağlantısı
+- **Gelişmiş logout sistemi** - Güvenli çıkış, session yönetimi, navigation temizleme
+- **Offline Mode Desteği** - İnternet olmasa bile uygulama çalışır
+- **Manuel Çıkış** - Otomatik çıkış yok, kullanıcı kontrollü session yönetimi
 
 ### 📱 Uygulama Takibi
 - UsageStatsManager ile uygulama kullanım süresi takibi
@@ -109,6 +112,58 @@ Uygulama aşağıdaki izinleri gerektirir:
 - Firestore'da şifrelenmiş veri saklama
 - Eşleştirme kodu ile güvenli bağlantı
 - Usage Access izni ile sınırlı erişim
+- **Gelişmiş Logout Sistemi:**
+  - Merkezi LogoutManager ile tüm logout işlemleri
+  - Session yönetimi - MANUEL çıkış sistemi (otomatik çıkış YOK)
+  - Navigation stack temizleme
+  - Hata yakalama ve kullanıcı bildirimleri
+  - Extension fonksiyonlar ile basit kullanım
+- **Offline Mode Desteği:**
+  - İnternet bağlantısı olmasa bile uygulama çalışır
+  - Local session cache sistemi
+  - Otomatik online/offline geçiş
+  - Network durumu bildirimleri
+
+## Session Yönetimi
+
+### 🔄 Offline-First Yaklaşım
+- Local session cache ile internet olmadan çalışır
+- Firebase verisi cache'lenir
+- Network kesintilerinde kesintisiz deneyim
+- Reconnect durumunda otomatik senkronizasyon
+
+### 🛡️ Manuel Kontrol
+- **OTOMATIK ÇIKIŞ YOK** - Kullanıcı kontrollü session
+- Süre sınırı olmadan çalışır
+- Manuel logout ile tam temizlik
+- Session persistence ile uygulama kapatma/açmada devam eder
+
+## Logout Sistemi Özellikleri
+
+### 🛡️ Güvenlik
+- Firebase Auth'dan tam çıkış
+- Local session verilerinin temizlenmesi
+- **MANUEL çıkış sistemi** - Otomatik çıkış YOK
+- Güvenli navigation handling
+
+### 📶 Offline Mode
+- İnternet bağlantısı olmadan da çalışır
+- Local session cache sistemi
+- Network durumu takibi
+- Otomatik online/offline geçiş
+
+### 🔧 Kullanım Kolaylığı
+- Extension fonksiyonlar (`performLogoutWithManager`, `performQuickLogout`)
+- Merkezi LogoutManager sınıfı
+- Onay dialog'u ile veya hızlı çıkış seçenekleri
+- Otomatik hata yakalama ve bildirimi
+
+### 📱 User Experience
+- Loading göstergesi
+- Başarı/hata toast mesajları
+- Smooth navigation geçişleri
+- Back stack temizleme
+- Network durumu bildirimleri
 
 ## Katkıda Bulunma
 
