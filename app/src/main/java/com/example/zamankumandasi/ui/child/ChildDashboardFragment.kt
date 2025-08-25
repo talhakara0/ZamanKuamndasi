@@ -27,7 +27,6 @@ import com.example.zamankumandasi.ui.UsageAccessActivity
 import com.example.zamankumandasi.ui.adapter.AppUsageAdapter
 import com.example.zamankumandasi.ui.viewmodel.AppUsageViewModel
 import com.example.zamankumandasi.ui.viewmodel.AuthViewModel
-import com.example.zamankumandasi.utils.NetworkUtils
 import com.example.zamankumandasi.utils.performLogoutWithManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -45,9 +44,6 @@ class ChildDashboardFragment : Fragment() {
     
     @Inject
     lateinit var logoutManager: LogoutManager
-    
-    @Inject
-    lateinit var networkUtils: NetworkUtils
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -64,7 +60,8 @@ class ChildDashboardFragment : Fragment() {
         Log.d("talha", "ChildDashboardFragment açıldı")
 
         setHasOptionsMenu(true)
-        checkNetworkStatus()
+        // Network kontrol disabled - internet varken yanlış uyarı vermesin
+        // checkNetworkStatus()
         setupViews()
         setupRecyclerView()
         observeCurrentUser()
@@ -97,22 +94,8 @@ class ChildDashboardFragment : Fragment() {
     }
     
     private fun checkNetworkStatus() {
-        val isOnline = networkUtils.isNetworkAvailable()
-        val hasConnection = networkUtils.hasNetworkConnection()
-        
-        android.util.Log.d("ChildDashboard", "Network status - Advanced: $isOnline, Simple: $hasConnection")
-        
-        if (!hasConnection) {
-            Toast.makeText(context, 
-                "📶 İnternet bağlantısı bulunamadı - Offline modda çalışıyor", 
-                Toast.LENGTH_LONG).show()
-        } else if (!isOnline) {
-            Toast.makeText(context, 
-                "📶 Bağlantı var ama internet erişimi sınırlı - Offline modda çalışıyor", 
-                Toast.LENGTH_LONG).show()
-        } else {
-            android.util.Log.d("ChildDashboard", "Network: Online - Internet bağlantısı mevcut")
-        }
+        // Network kontrolü tamamen devre dışı - internet var kabul ediliyor
+        Log.d("ChildDashboard", "Network: ✅ İnternet kontrolü devre dışı (varsayılan: bağlı)")
     }
 
     private fun setupRecyclerView() {
@@ -140,7 +123,7 @@ class ChildDashboardFragment : Fragment() {
     }
 
     /**
-     * QueryEvents tabanlı kullanım ölçümü
+     * QueryEvents tabanlı kullanım ölçümü - İyileştirilmiş versiyon
      */
     private fun checkAndLoadUsageData() {
         Log.d("talha", "Yenile butonuna basıldı, usage verisi toplanıyor")
@@ -150,38 +133,84 @@ class ChildDashboardFragment : Fragment() {
         val endTime = System.currentTimeMillis()
         val startTime = endTime - 24 * 60 * 60 * 1000 // Son 24 saat
 
-        val usageEvents = usageStatsManager.queryEvents(startTime, endTime)
+        // Önce UsageStats ile günlük toplam kullanım verilerini al (daha güvenilir)
+        val usageStats = usageStatsManager.queryUsageStats(
+            UsageStatsManager.INTERVAL_DAILY,
+            startTime,
+            endTime
+        )
+
         val usageMap = mutableMapOf<String, Long>()
+        
+        // UsageStats'tan toplam kullanım sürelerini al
+        usageStats.forEach { stats ->
+            if (stats.totalTimeInForeground > 0) {
+                usageMap[stats.packageName] = stats.totalTimeInForeground // Bu zaten milisaniye cinsinden
+                Log.d("talha", "${stats.packageName}: ${stats.totalTimeInForeground}ms (${stats.totalTimeInForeground/1000/60}dk)")
+            }
+        }
+
+        // Ek olarak Events ile eksik verileri tamamla
+        val usageEvents = usageStatsManager.queryEvents(startTime, endTime)
         var lastEventTimeMap = mutableMapOf<String, Long>()
 
         while (usageEvents.hasNextEvent()) {
             val event = UsageEvents.Event()
             usageEvents.getNextEvent(event)
 
-            if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
-                lastEventTimeMap[event.packageName] = event.timeStamp
-            } else if (event.eventType == UsageEvents.Event.ACTIVITY_PAUSED) {
-                val start = lastEventTimeMap[event.packageName]
-                if (start != null) {
-                    val duration = (event.timeStamp - start) / 1000
-                    usageMap[event.packageName] = usageMap.getOrDefault(event.packageName, 0) + duration
-                    lastEventTimeMap.remove(event.packageName)
+            when (event.eventType) {
+                UsageEvents.Event.ACTIVITY_RESUMED -> {
+                    lastEventTimeMap[event.packageName] = event.timeStamp
+                }
+                UsageEvents.Event.ACTIVITY_PAUSED -> {
+                    val start = lastEventTimeMap[event.packageName]
+                    if (start != null) {
+                        val duration = event.timeStamp - start // Milisaniye cinsinden
+                        // Sadece UsageStats'ta olmayan uygulamalar için event verisi kullan
+                        if (!usageMap.containsKey(event.packageName)) {
+                            usageMap[event.packageName] = usageMap.getOrDefault(event.packageName, 0) + duration
+                        }
+                        lastEventTimeMap.remove(event.packageName)
+                    }
+                }
+                UsageEvents.Event.SCREEN_NON_INTERACTIVE -> {
+                    // Ekran kapanınca açık kalan uygulamaları da hesapla
+                    lastEventTimeMap.forEach { (pkg, startTime) ->
+                        val duration = event.timeStamp - startTime
+                        if (duration > 0 && !usageMap.containsKey(pkg)) {
+                            usageMap[pkg] = usageMap.getOrDefault(pkg, 0) + duration
+                        }
+                    }
+                    lastEventTimeMap.clear()
                 }
             }
         }
 
-        Log.d("talha", "Toplam event sayısı: ${usageMap.size}")
+        // Hala açık olan uygulamaları hesapla
+        lastEventTimeMap.forEach { (pkg, startTime) ->
+            val duration = endTime - startTime
+            if (duration > 0 && !usageMap.containsKey(pkg)) {
+                usageMap[pkg] = usageMap.getOrDefault(pkg, 0) + duration
+            }
+        }
 
-        // 🔹 usageMap’i doğrudan adapter’e gönderiyoruz
-        val usageList = usageMap.map { (pkg, dur) ->
+        Log.d("talha", "Toplam uygulama sayısı: ${usageMap.size}")
+        usageMap.forEach { (pkg, time) ->
+            Log.d("talha", "$pkg: ${time}ms (${time/1000/60}dk)")
+        }
+
+        // Minimum kullanım süresi filtresi (30 saniyeden az olanları hariç tut)
+        val filteredUsageMap = usageMap.filter { it.value >= 30000 } // 30 saniye = 30000ms
+
+        val usageList = filteredUsageMap.map { (pkg, dur) ->
             AppUsage(
                 appName = getAppNameFromPackage(requireContext(), pkg),
                 packageName = pkg,
-                usedTime = dur
+                usedTime = dur // Artık milisaniye cinsinden
             )
         }
 
-        // 🔹 RTDB'ye yaz (her uygulama için)
+        // 🔹 RTDB'ye yaz (her uygulama için) - Akıllı veri birleştirme ile
         authViewModel.currentUser.value?.let { user ->
             usageList.forEach { appUsage ->
                 val safePackageName = appUsage.packageName.replace(".", "_")
@@ -193,8 +222,34 @@ class ChildDashboardFragment : Fragment() {
                 Log.d("talha", "Firebase'e yazılıyor: $appUsageToSave")
                 lifecycleScope.launch {
                     try {
-                        appUsageViewModel.saveAppUsage(appUsageToSave)
-                        Log.d("talha", "Firebase'e yazma başarılı: ${appUsageToSave.id}")
+                        // Mevcut veriyi al ve günlük maksimum kullanım ile birleştir
+                        val existingUsage = appUsageViewModel.getAppUsageByPackage(user.id, appUsage.packageName)
+                        val finalAppUsage = if (existingUsage != null) {
+                            // Günlük toplam kullanım süresinin en büyük değerini al (kullanım geri gitmez)
+                            val today = System.currentTimeMillis() / (24 * 60 * 60 * 1000)
+                            val lastUsedDay = existingUsage.lastUsed / (24 * 60 * 60 * 1000)
+                            
+                            if (today == lastUsedDay) {
+                                // Aynı gün - maksimum kullanım süresini kullan
+                                existingUsage.copy(
+                                    usedTime = maxOf(existingUsage.usedTime, appUsage.usedTime),
+                                    lastUsed = System.currentTimeMillis(),
+                                    isBlocked = maxOf(existingUsage.usedTime, appUsage.usedTime) >= existingUsage.dailyLimit && existingUsage.dailyLimit > 0
+                                )
+                            } else {
+                                // Yeni gün - kullanım süresini sıfırla
+                                existingUsage.copy(
+                                    usedTime = appUsage.usedTime,
+                                    lastUsed = System.currentTimeMillis(),
+                                    isBlocked = appUsage.usedTime >= existingUsage.dailyLimit && existingUsage.dailyLimit > 0
+                                )
+                            }
+                        } else {
+                            appUsageToSave
+                        }
+                        
+                        appUsageViewModel.saveAppUsage(finalAppUsage)
+                        Log.d("talha", "Firebase'e yazma başarılı: ${finalAppUsage.id} - ${finalAppUsage.usedTime}ms")
                     } catch (e: Exception) {
                         Log.e("talha", "Firebase'e yazma hatası: ${e.message}")
                     }
@@ -205,7 +260,7 @@ class ChildDashboardFragment : Fragment() {
         // Kullanım süresine göre azalan şekilde sırala
         val sortedUsageList = usageList.sortedByDescending { it.usedTime }
 
-        // Ana thread’de adapter’e bas
+        // Ana thread'de adapter'e bas
         activity?.runOnUiThread {
             appUsageAdapter.submitList(sortedUsageList)
         }

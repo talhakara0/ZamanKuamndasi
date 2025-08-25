@@ -137,6 +137,15 @@ class AppUsageViewModel @Inject constructor(
         }
     }
 
+    suspend fun getAppUsageByPackage(userId: String, packageName: String): AppUsage? {
+        return try {
+            appUsageRepository.getAppUsageByPackage(userId, packageName)
+        } catch (e: Exception) {
+            _error.value = "Kullanım verisi alınırken hata: ${e.message}"
+            null
+        }
+    }
+
     fun clearError() {
         _error.value = null
     }

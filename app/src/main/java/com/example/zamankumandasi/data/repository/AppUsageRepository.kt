@@ -146,16 +146,29 @@ class AppUsageRepository @Inject constructor(
     }
     
     suspend fun updateUsedTime(userId: String, packageName: String, usedTime: Long) {
-        Log.d("talha", "updateUsedTime çağrıldı: userId=$userId, packageName=$packageName, usedTime=$usedTime")
+        Log.d("talha", "updateUsedTime çağrıldı: userId=$userId, packageName=$packageName, usedTime=${usedTime}ms (${usedTime/1000/60}dk)")
         try {
             val existingUsage = getAppUsageByPackage(userId, packageName)
             if (existingUsage != null) {
+                // Günlük kullanım süresi kontrolü
+                val today = System.currentTimeMillis() / (24 * 60 * 60 * 1000)
+                val lastUsedDay = existingUsage.lastUsed / (24 * 60 * 60 * 1000)
+                
+                val newUsedTime = if (today == lastUsedDay) {
+                    // Aynı gün - artışla güncelle
+                    existingUsage.usedTime + usedTime
+                } else {
+                    // Yeni gün - sıfırla ve yeni kullanımı ekle
+                    usedTime
+                }
+                
                 val updatedUsage = existingUsage.copy(
-                    usedTime = existingUsage.usedTime + usedTime,
+                    usedTime = newUsedTime,
                     lastUsed = System.currentTimeMillis(),
-                    isBlocked = (existingUsage.usedTime + usedTime) >= existingUsage.dailyLimit
+                    isBlocked = newUsedTime >= existingUsage.dailyLimit && existingUsage.dailyLimit > 0
                 )
                 updateAppUsage(updatedUsage)
+                Log.d("talha", "Mevcut kullanım güncellendi: ${newUsedTime}ms (${newUsedTime/1000/60}dk)")
             } else {
                 val packageManager = context.packageManager
                 val appName = try {
@@ -176,6 +189,7 @@ class AppUsageRepository @Inject constructor(
                     isBlocked = false
                 )
                 saveAppUsage(newUsage)
+                Log.d("talha", "Yeni kullanım kaydı oluşturuldu: ${usedTime}ms (${usedTime/1000/60}dk)")
             }
             Log.d("talha", "updateUsedTime başarılı")
         } catch (e: Exception) {

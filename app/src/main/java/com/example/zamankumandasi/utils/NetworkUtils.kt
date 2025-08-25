@@ -4,13 +4,9 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class NetworkUtils @Inject constructor(
-    @ApplicationContext private val context: Context
+class NetworkUtils(
+    private val context: Context
 ) {
     
     fun isNetworkAvailable(): Boolean {
@@ -18,27 +14,16 @@ class NetworkUtils @Inject constructor(
             val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                val network = connectivityManager.activeNetwork
-                if (network == null) {
-                    android.util.Log.d("NetworkUtils", "No active network")
-                    return false
-                }
+                val network = connectivityManager.activeNetwork ?: return false
+                val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
                 
-                val capabilities = connectivityManager.getNetworkCapabilities(network)
-                if (capabilities == null) {
-                    android.util.Log.d("NetworkUtils", "No network capabilities")
-                    return false
-                }
+                // Basit kontrol - sadece aktif bağlantı var mı?
+                val hasConnection = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
                 
-                val hasWifi = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-                val hasCellular = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-                val hasEthernet = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-                val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                val isValidated = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-                
-                android.util.Log.d("NetworkUtils", "WiFi: $hasWifi, Cellular: $hasCellular, Ethernet: $hasEthernet, Internet: $hasInternet, Validated: $isValidated")
-                
-                return (hasWifi || hasCellular || hasEthernet) && hasInternet && isValidated
+                android.util.Log.d("NetworkUtils", "Network connection available: $hasConnection")
+                return hasConnection
             } else {
                 @Suppress("DEPRECATION")
                 val networkInfo = connectivityManager.activeNetworkInfo
@@ -59,43 +44,49 @@ class NetworkUtils @Inject constructor(
             NetworkStatus.OFFLINE
         }
     }
-    
-    // Daha basit internet kontrolü (sadece bağlantı var mı yok mu)
+
+    // En basit ve güvenilir internet kontrolü
     fun hasNetworkConnection(): Boolean {
         return try {
             val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 val network = connectivityManager.activeNetwork
+                if (network == null) {
+                    android.util.Log.d("NetworkUtils", "Aktif network yok")
+                    return false
+                }
+                
                 val capabilities = connectivityManager.getNetworkCapabilities(network)
-                capabilities != null && (
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-                )
+                if (capabilities == null) {
+                    android.util.Log.d("NetworkUtils", "Network capabilities yok")
+                    return false
+                }
+                
+                // Sadece bağlantı türü kontrolü - EN BASİT KONTROL
+                val hasWifi = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                val hasCellular = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+                val hasEthernet = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+                
+                val hasAnyConnection = hasWifi || hasCellular || hasEthernet
+                
+                android.util.Log.d("NetworkUtils", "WiFi: $hasWifi, Cellular: $hasCellular, Ethernet: $hasEthernet, Final: $hasAnyConnection")
+                return hasAnyConnection
+                
             } else {
                 @Suppress("DEPRECATION")
                 val networkInfo = connectivityManager.activeNetworkInfo
-                networkInfo?.isConnected == true
+                val isConnected = networkInfo?.isConnected == true
+                android.util.Log.d("NetworkUtils", "Legacy - Connected: $isConnected")
+                return isConnected
             }
         } catch (e: Exception) {
-            android.util.Log.e("NetworkUtils", "Error checking simple network: ${e.message}")
-            false
+            android.util.Log.e("NetworkUtils", "Network kontrol hatası: ${e.message}")
+            // Hata durumunda true döndür - kullanıcıyı rahatsız etme
+            return true
         }
     }
     
-    // Test için - gerçek internet bağlantısını ping ile kontrol et
-    fun canReachInternet(): Boolean {
-        return try {
-            val runtime = Runtime.getRuntime()
-            val process = runtime.exec("/system/bin/ping -c 1 8.8.8.8")
-            val exitValue = process.waitFor()
-            exitValue == 0
-        } catch (e: Exception) {
-            android.util.Log.e("NetworkUtils", "Ping test failed: ${e.message}")
-            false
-        }
-    }
     // Debug için network bilgilerini detaylı yazdıran metod
     fun getDetailedNetworkInfo(): String {
         return try {
@@ -117,12 +108,13 @@ class NetworkUtils @Inject constructor(
                     } else {
                         builder.append("No capabilities\n")
                     }
+                } else {
+                    builder.append("No active network\n")
                 }
             } else {
                 @Suppress("DEPRECATION")
                 val networkInfo = connectivityManager.activeNetworkInfo
-                builder.append("Legacy - Connected: ${networkInfo?.isConnected}\n")
-                builder.append("Legacy - Type: ${networkInfo?.typeName}\n")
+                builder.append("Legacy Network Info: ${networkInfo?.toString()}\n")
             }
             
             builder.toString()

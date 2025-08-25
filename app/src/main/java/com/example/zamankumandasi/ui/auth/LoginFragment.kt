@@ -14,7 +14,6 @@ import com.example.zamankumandasi.data.model.User
 import com.example.zamankumandasi.data.model.UserType
 import com.example.zamankumandasi.databinding.FragmentLoginBinding
 import com.example.zamankumandasi.ui.viewmodel.AuthViewModel
-import com.example.zamankumandasi.utils.NetworkUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,9 +25,6 @@ class LoginFragment : Fragment() {
     private val binding get() = _binding!!
     
     private val authViewModel: AuthViewModel by viewModels()
-    
-    @Inject
-    lateinit var networkUtils: NetworkUtils
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,8 +46,8 @@ class LoginFragment : Fragment() {
     }
 
     private fun setupViews() {
-        // Network durumunu göster
-        checkNetworkStatus()
+        // Network kontrol disabled - internet varken yanlış uyarı vermesin
+        // checkNetworkStatus()
         
         binding.btnLogin.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
@@ -68,23 +64,8 @@ class LoginFragment : Fragment() {
     }
     
     private fun checkNetworkStatus() {
-        val isOnline = networkUtils.isNetworkAvailable()
-        val hasConnection = networkUtils.hasNetworkConnection()
-        
-        android.util.Log.d("LoginFragment", "Network status - Advanced: $isOnline, Simple: $hasConnection")
-        android.util.Log.d("LoginFragment", "Network details:\n${networkUtils.getDetailedNetworkInfo()}")
-        
-        if (!hasConnection) {
-            Toast.makeText(context, 
-                "📶 İnternet bağlantısı bulunamadı - Offline modda çalışıyor", 
-                Toast.LENGTH_LONG).show()
-        } else if (!isOnline) {
-            Toast.makeText(context, 
-                "📶 Bağlantı var ama internet erişimi sınırlı - Offline modda çalışıyor", 
-                Toast.LENGTH_LONG).show()
-        } else {
-            android.util.Log.d("LoginFragment", "Network: Online - Internet bağlantısı mevcut")
-        }
+        // Network kontrolü tamamen devre dışı - internet var kabul ediliyor
+        android.util.Log.d("LoginFragment", "Network: ✅ İnternet kontrolü devre dışı (varsayılan: bağlı)")
     }
 
     private fun validateInputs(email: String, password: String): Boolean {

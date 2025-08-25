@@ -75,9 +75,9 @@ class AppUsageService : Service() {
         try {
             val usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
             val endTime = System.currentTimeMillis()
-            val startTime = endTime - TRACKING_INTERVAL
+            val startTime = endTime - (24 * 60 * 60 * 1000) // Son 24 saat (günlük toplam için)
 
-            // Daha basit yaklaşım: Günlük kullanım istatistiklerini al
+            // Günlük kullanım istatistiklerini al
             val usageStats = usageStatsManager.queryUsageStats(
                 UsageStatsManager.INTERVAL_DAILY,
                 startTime,
@@ -87,7 +87,7 @@ class AppUsageService : Service() {
             val currentUser = authRepository.getCurrentUser()
             currentUser?.let { user ->
                 usageStats.forEach { stats ->
-                    if (stats.totalTimeInForeground > 0) {
+                    if (stats.totalTimeInForeground > 60000) { // Minimum 1 dakika kullanım
                         // Uygulama adını al
                         val packageManager = packageManager
                         val appName = try {
@@ -98,12 +98,26 @@ class AppUsageService : Service() {
                             stats.packageName
                         }
                         
-                        // Firestore'a kaydet
-                        appUsageRepository.updateUsedTime(
-                            user.id, 
-                            stats.packageName, 
-                            stats.totalTimeInForeground
-                        )
+                        // Mevcut veriyi kontrol et ve sadece daha yüksek kullanım varsa güncelle
+                        val existingUsage = appUsageRepository.getAppUsageByPackage(user.id, stats.packageName)
+                        val shouldUpdate = if (existingUsage != null) {
+                            // Sadece günlük kullanım artmışsa güncelle
+                            stats.totalTimeInForeground > existingUsage.usedTime
+                        } else {
+                            true
+                        }
+                        
+                        if (shouldUpdate) {
+                            appUsageRepository.updateUsedTime(
+                                user.id, 
+                                stats.packageName, 
+                                if (existingUsage != null) {
+                                    stats.totalTimeInForeground - existingUsage.usedTime // Sadece farkı ekle
+                                } else {
+                                    stats.totalTimeInForeground // İlk kez kayıt
+                                }
+                            )
+                        }
                     }
                 }
             }
