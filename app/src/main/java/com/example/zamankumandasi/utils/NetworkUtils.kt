@@ -22,17 +22,17 @@ class NetworkUtils(
                         capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
                         capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
                 
-                android.util.Log.d("NetworkUtils", "Network connection available: $hasConnection")
+                android.util.Log.d("talha", "Network connection available: $hasConnection")
                 return hasConnection
             } else {
                 @Suppress("DEPRECATION")
                 val networkInfo = connectivityManager.activeNetworkInfo
                 val isConnected = networkInfo?.isConnected == true
-                android.util.Log.d("NetworkUtils", "Legacy check - Connected: $isConnected, Type: ${networkInfo?.typeName}")
+                android.util.Log.d("talha", "Legacy check - Connected: $isConnected, Type: ${networkInfo?.typeName}")
                 return isConnected
             }
         } catch (e: Exception) {
-            android.util.Log.e("NetworkUtils", "Error checking network: ${e.message}")
+            android.util.Log.e("talha", "Error checking network: ${e.message}")
             return false
         }
     }
@@ -53,13 +53,13 @@ class NetworkUtils(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 val network = connectivityManager.activeNetwork
                 if (network == null) {
-                    android.util.Log.d("NetworkUtils", "Aktif network yok")
+                    android.util.Log.d("talha", "Aktif network yok")
                     return false
                 }
                 
                 val capabilities = connectivityManager.getNetworkCapabilities(network)
                 if (capabilities == null) {
-                    android.util.Log.d("NetworkUtils", "Network capabilities yok")
+                    android.util.Log.d("talha", "Network capabilities yok")
                     return false
                 }
                 
@@ -70,18 +70,18 @@ class NetworkUtils(
                 
                 val hasAnyConnection = hasWifi || hasCellular || hasEthernet
                 
-                android.util.Log.d("NetworkUtils", "WiFi: $hasWifi, Cellular: $hasCellular, Ethernet: $hasEthernet, Final: $hasAnyConnection")
+                android.util.Log.d("talha", "WiFi: $hasWifi, Cellular: $hasCellular, Ethernet: $hasEthernet, Final: $hasAnyConnection")
                 return hasAnyConnection
                 
             } else {
                 @Suppress("DEPRECATION")
                 val networkInfo = connectivityManager.activeNetworkInfo
                 val isConnected = networkInfo?.isConnected == true
-                android.util.Log.d("NetworkUtils", "Legacy - Connected: $isConnected")
+                android.util.Log.d("talha", "Legacy - Connected: $isConnected")
                 return isConnected
             }
         } catch (e: Exception) {
-            android.util.Log.e("NetworkUtils", "Network kontrol hatası: ${e.message}")
+            android.util.Log.e("talha", "Network kontrol hatası: ${e.message}")
             // Hata durumunda true döndür - kullanıcıyı rahatsız etme
             return true
         }

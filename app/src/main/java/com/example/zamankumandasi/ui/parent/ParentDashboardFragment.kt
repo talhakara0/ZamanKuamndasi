@@ -14,15 +14,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.zamankumandasi.R
-import com.example.zamankumandasi.data.manager.LogoutManager
+import com.example.zamankumandasi.utils.SimpleLogout
 import com.example.zamankumandasi.data.model.UserType
 import com.example.zamankumandasi.databinding.FragmentParentDashboardBinding
 import com.example.zamankumandasi.ui.adapter.ChildrenAdapter
 import com.example.zamankumandasi.ui.viewmodel.AuthViewModel
-import com.example.zamankumandasi.utils.performLogoutWithManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class ParentDashboardFragment : Fragment() {
@@ -33,8 +31,7 @@ class ParentDashboardFragment : Fragment() {
     private val authViewModel: AuthViewModel by viewModels()
     private lateinit var childrenAdapter: ChildrenAdapter
     
-    @Inject
-    lateinit var logoutManager: LogoutManager
+    // LogoutManager removed; using SimpleLogout utility
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -48,10 +45,23 @@ class ParentDashboardFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        setHasOptionsMenu(true)
+        // Fragment'teki toolbar menüsünü aktif et
+        val toolbar = binding.toolbar
+        toolbar.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.action_logout -> {
+                    android.util.Log.d("talha", "ParentDashboard: Toolbar çıkış menu item seçildi")
+                    SimpleLogout.confirmAndSignOut(this, authViewModel)
+                    true
+                }
+                else -> false
+            }
+        }
+        
         setupViews()
         setupRecyclerView()
         observeCurrentUser()
+    observeAuthState()
         observeChildren()
     }
 
@@ -94,7 +104,7 @@ class ParentDashboardFragment : Fragment() {
             user?.let {
                 binding.tvUserEmail.text = it.email
                 binding.tvPairingCode.text = "Eşleştirme Kodu: ${it.pairingCode}"
-                android.util.Log.d("ParentDashboard", "Ebeveyn id: ${it.id}, email: ${it.email}")
+                android.util.Log.d("talha", "Ebeveyn id: ${it.id}, email: ${it.email}")
                 // Eğer ebeveyn ise çocuklarını yükle
                 if (it.userType == UserType.PARENT) {
                     authViewModel.loadChildren(it.id)
@@ -105,9 +115,9 @@ class ParentDashboardFragment : Fragment() {
     
     private fun observeChildren() {
         authViewModel.children.observe(viewLifecycleOwner) { children ->
-            android.util.Log.d("ParentDashboard", "Yüklenen çocuk sayısı: ${children.size}")
+            android.util.Log.d("talha", "Yüklenen çocuk sayısı: ${children.size}")
             children.forEach { child ->
-                android.util.Log.d("ParentDashboard", "Çocuk: ${child.email}, parentId: ${child.parentId}")
+                android.util.Log.d("talha", "Çocuk: ${child.email}, parentId: ${child.parentId}")
             }
             if (children.isNotEmpty()) {
                 binding.tvNoChildren.visibility = View.GONE
@@ -118,18 +128,43 @@ class ParentDashboardFragment : Fragment() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.menu_parent_dashboard, menu)
-        super.onCreateOptionsMenu(menu, inflater)
+    // Eski deprecated menü fonksiyonları kaldırıldı - modern MenuProvider kullanılıyor
+
+    private fun performDirectLogoutParent() {
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle("Çıkış Yap")
+            .setMessage("Çıkış yapmak istediğinize emin misiniz?")
+            .setPositiveButton("Evet") { dialog, _ ->
+                dialog.dismiss()
+                authViewModel.signOut()
+            }
+            .setNegativeButton("Hayır") { dialog, _ -> dialog.dismiss() }
+            .setCancelable(true)
+            .show()
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_logout -> {
-                performLogoutWithManager(authViewModel, logoutManager)
-                true
+    private fun observeAuthState() {
+        authViewModel.authState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is AuthViewModel.AuthState.SignedOut -> {
+                    try {
+                        val navOptions = androidx.navigation.NavOptions.Builder()
+                            .setPopUpTo(R.id.nav_graph, true)
+                            .setLaunchSingleTop(true)
+                            .build()
+                        findNavController().navigate(R.id.loginFragment, null, navOptions)
+                        Toast.makeText(context, "Başarıyla çıkış yapıldı", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Çıkış sonrası yönlendirme hatası: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+                is AuthViewModel.AuthState.Error -> {
+                    Toast.makeText(context, "Çıkış hatası: ${state.message}", Toast.LENGTH_LONG).show()
+                }
+                else -> {
+                    // ignore loading/success
+                }
             }
-            else -> super.onOptionsItemSelected(item)
         }
     }
 

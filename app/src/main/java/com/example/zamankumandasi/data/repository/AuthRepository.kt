@@ -75,17 +75,22 @@ class AuthRepository @Inject constructor(
     
     suspend fun signOut(): Result<Unit> {
         return try {
+            android.util.Log.d("talha", "signOut: çağrıldı")
+
             // Firebase Auth'dan çıkış yap
             auth.signOut()
-            
+            android.util.Log.d("talha", "signOut: FirebaseAuth.signOut() tamamlandı")
+
             // Session temizle
             sessionManager.clearSession()
-            
+            android.util.Log.d("talha", "signOut: sessionManager.clearSession() tamamlandı")
+
             // Başka temizleme işlemleri burada yapılabilir
             // Örneğin: local cache temizleme, shared preferences temizleme vs.
-            
+
             Result.success(Unit)
         } catch (e: Exception) {
+            android.util.Log.e("talha", "signOut error: ${e.message}")
             Result.failure(e)
         }
     }
@@ -184,6 +189,30 @@ class AuthRepository @Inject constructor(
             snapshot.children.mapNotNull { it.getValue(User::class.java) }.filter { it.userType == UserType.CHILD }
         } catch (e: Exception) {
             emptyList()
+        }
+    }
+    
+    suspend fun getParentByChildId(childId: String): User? {
+        return try {
+            // Önce çocuk kullanıcısını al
+            val childSnapshot = database.reference.child("users").child(childId).get().await()
+            val child = childSnapshot.getValue(User::class.java)
+            
+            // Eğer çocuğun parent ID'si varsa, parent'ı getir
+            child?.parentId?.let { parentId ->
+                val parentSnapshot = database.reference.child("users").child(parentId).get().await()
+                val parent = parentSnapshot.getValue(User::class.java)
+                
+                // Parent bulunamadıysa null döndür (bu durumda UI'da "Ebeveyn bulunamadı" gösterilecek)
+                if (parent == null) {
+                    android.util.Log.w("talha", "Parent ID'si ($parentId) bulundu ama parent kullanıcısı mevcut değil")
+                }
+                
+                parent
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("talha", "getParentByChildId error: ${e.message}")
+            null
         }
     }
     

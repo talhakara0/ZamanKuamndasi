@@ -5,10 +5,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.NavHostFragment
 import com.example.zamankumandasi.R
 import com.example.zamankumandasi.data.model.UserType
 import com.example.zamankumandasi.ui.viewmodel.AuthViewModel
+import androidx.navigation.fragment.NavHostFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         authViewModel.authState.observe(this) { authState ->
             when (authState) {
                 is AuthViewModel.AuthState.SignedOut -> {
-                    android.util.Log.d("MainActivity", "Kullanıcı çıkış yaptı - otomatik yönlendirme engellendi")
+                    android.util.Log.d("talha", "Kullanıcı çıkış yaptı - otomatik yönlendirme engellendi")
                     isLoggedOut = true
                 }
                 is AuthViewModel.AuthState.Success -> {
@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
             // Eğer logout yapıldıysa otomatik yönlendirme yapma
             if (user != null && navController.currentDestination?.id == R.id.loginFragment && !isLoggedOut) {
                 try {
-                    android.util.Log.d("MainActivity", "Otomatik yönlendirme yapılıyor: ${user.userType}")
+                    android.util.Log.d("talha", "Otomatik yönlendirme yapılıyor: ${user.userType}")
                     when (user.userType) {
                         UserType.PARENT -> {
                             navController.navigate(R.id.action_loginFragment_to_parentDashboardFragment)
@@ -61,12 +61,12 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("MainActivity", "Auto-navigation error: ${e.message}")
+                    android.util.Log.e("talha", "Auto-navigation error: ${e.message}")
                 }
             } else if (user == null) {
-                android.util.Log.d("MainActivity", "Kullanıcı null - login ekranında kalınıyor")
+                android.util.Log.d("talha", "Kullanıcı null - login ekranında kalınıyor")
             } else if (isLoggedOut) {
-                android.util.Log.d("MainActivity", "Logout yapıldı - otomatik yönlendirme engellendi")
+                android.util.Log.d("talha", "Logout yapıldı - otomatik yönlendirme engellendi")
             }
         }
     }

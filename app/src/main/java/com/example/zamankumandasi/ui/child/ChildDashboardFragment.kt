@@ -19,18 +19,18 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.zamankumandasi.R
-import com.example.zamankumandasi.data.manager.LogoutManager
+// ...existing imports...
 import com.example.zamankumandasi.data.model.AppUsage
+import com.example.zamankumandasi.data.model.UserType
 import com.example.zamankumandasi.databinding.FragmentChildDashboardBinding
 import com.example.zamankumandasi.service.AppUsageService
 import com.example.zamankumandasi.ui.UsageAccessActivity
 import com.example.zamankumandasi.ui.adapter.AppUsageAdapter
 import com.example.zamankumandasi.ui.viewmodel.AppUsageViewModel
 import com.example.zamankumandasi.ui.viewmodel.AuthViewModel
-import com.example.zamankumandasi.utils.performLogoutWithManager
+import com.example.zamankumandasi.utils.SimpleLogout
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class ChildDashboardFragment : Fragment() {
@@ -42,8 +42,7 @@ class ChildDashboardFragment : Fragment() {
     private val appUsageViewModel: AppUsageViewModel by viewModels()
     private lateinit var appUsageAdapter: AppUsageAdapter
     
-    @Inject
-    lateinit var logoutManager: LogoutManager
+    // LogoutManager removed; using SimpleLogout utility
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -59,12 +58,27 @@ class ChildDashboardFragment : Fragment() {
 
         Log.d("talha", "ChildDashboardFragment açıldı")
 
-        setHasOptionsMenu(true)
+        // Fragment'teki toolbar menüsünü aktif et
+        val toolbar = binding.toolbar
+        toolbar.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.action_logout -> {
+                    Log.d("talha", "ChildDashboard: Toolbar çıkış menu item seçildi")
+                    SimpleLogout.confirmAndSignOut(this, authViewModel)
+                    true
+                }
+                else -> false
+            }
+        }
+
+        // Eski setHasOptionsMenu'yu kaldır
+        // setHasOptionsMenu(true)
         // Network kontrol disabled - internet varken yanlış uyarı vermesin
         // checkNetworkStatus()
         setupViews()
         setupRecyclerView()
         observeCurrentUser()
+    observeAuthState()
         observeAppUsage()
 
         if (!hasUsageStatsPermission(requireContext())) {
@@ -95,7 +109,7 @@ class ChildDashboardFragment : Fragment() {
     
     private fun checkNetworkStatus() {
         // Network kontrolü tamamen devre dışı - internet var kabul ediliyor
-        Log.d("ChildDashboard", "Network: ✅ İnternet kontrolü devre dışı (varsayılan: bağlı)")
+        Log.d("talha", "Network: ✅ İnternet kontrolü devre dışı (varsayılan: bağlı)")
     }
 
     private fun setupRecyclerView() {
@@ -116,8 +130,28 @@ class ChildDashboardFragment : Fragment() {
             Log.d("talha", "observeCurrentUser: user = $user")
             user?.let {
                 binding.tvUserEmail.text = it.email
-                binding.tvParentInfo.text = "Ebeveyn ID: ${it.parentId ?: "Henüz eşleştirilmedi"}"
+                
+                // Ebeveyn bilgisi yüklenene kadar geçici metin göster
+                if (it.parentId == null) {
+                    binding.tvParentInfo.text = "Henüz eşleştirilmedi"
+                } else {
+                    binding.tvParentInfo.text = "Ebeveyn bilgisi yükleniyor..."
+                    // Parent bilgisini yükle
+                    authViewModel.loadParentInfo(it.id)
+                }
+                
                 appUsageViewModel.loadAppUsageByUser(it.id)
+            }
+        }
+        
+        // Parent bilgisini observe et
+        authViewModel.parentInfo.observe(viewLifecycleOwner) { parent ->
+            val currentUser = authViewModel.currentUser.value
+            if (parent != null) {
+                binding.tvParentInfo.text = "Ebeveyn: ${parent.email}"
+            } else if (currentUser?.parentId != null) {
+                // Parent ID'si var ama parent bilgisi bulunamadı
+                binding.tvParentInfo.text = "Ebeveyn bilgisi bulunamadı"
             }
         }
     }
@@ -294,23 +328,56 @@ class ChildDashboardFragment : Fragment() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        Log.d("talha", "ChildDashboard: Menu oluşturuluyor")
-        inflater.inflate(R.menu.menu_child_dashboard, menu)
-        Log.d("talha", "ChildDashboard: Menu yüklendi, item sayısı: ${menu.size()}")
-        super.onCreateOptionsMenu(menu, inflater)
+    // Eski deprecated menü fonksiyonları kaldırıldı - modern MenuProvider kullanılıyor
+    
+    private fun performDirectLogout() {
+        Log.d("talha", "ChildDashboard: performDirectLogout başlatıldı")
+
+        // Onay dialogu göster ve onaylanırsa signOut çağır
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle("Çıkış Yap")
+            .setMessage("Çıkış yapmak istediğinize emin misiniz?")
+            .setPositiveButton("Evet") { dialog, _ ->
+                Log.d("talha", "ChildDashboard: Çıkış onaylandı - ViewModel.signOut çağrılıyor")
+                dialog.dismiss()
+                authViewModel.signOut()
+            }
+            .setNegativeButton("Hayır") { dialog, _ ->
+                Log.d("talha", "ChildDashboard: Çıkış iptal edildi")
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        Log.d("talha", "ChildDashboard: Menu item tıklandı: ${item.itemId}")
-        return when (item.itemId) {
-            R.id.action_logout -> {
-                Log.d("talha", "ChildDashboard: Çıkış menu item seçildi")
-                performLogoutWithManager(authViewModel, logoutManager)
-                true
-            }
+    private fun observeAuthState() {
+        authViewModel.authState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is AuthViewModel.AuthState.Loading -> {
+                    Log.d("talha", "AuthState: Loading")
+                }
+                is AuthViewModel.AuthState.SignedOut -> {
+                    Log.d("talha", "AuthState: SignedOut - navigate to login with cleared backstack")
+                    try {
+                        val navOptions = androidx.navigation.NavOptions.Builder()
+                            .setPopUpTo(R.id.nav_graph, true)
+                            .setLaunchSingleTop(true)
+                            .build()
 
-            else -> super.onOptionsItemSelected(item)
+                        findNavController().navigate(R.id.loginFragment, null, navOptions)
+                        Toast.makeText(context, "Başarıyla çıkış yapıldı", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Log.e("talha", "observeAuthState nav error: ${e.message}")
+                    }
+                }
+                is AuthViewModel.AuthState.Error -> {
+                    Log.e("talha", "AuthState Error: ${state.message}")
+                    Toast.makeText(context, "Çıkış hatası: ${state.message}", Toast.LENGTH_LONG).show()
+                }
+                is AuthViewModel.AuthState.Success -> {
+                    // ignore
+                }
+            }
         }
     }
 

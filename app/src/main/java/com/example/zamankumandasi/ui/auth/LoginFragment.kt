@@ -65,7 +65,7 @@ class LoginFragment : Fragment() {
     
     private fun checkNetworkStatus() {
         // Network kontrolü tamamen devre dışı - internet var kabul ediliyor
-        android.util.Log.d("LoginFragment", "Network: ✅ İnternet kontrolü devre dışı (varsayılan: bağlı)")
+        android.util.Log.d("talha", "Network: ✅ İnternet kontrolü devre dışı (varsayılan: bağlı)")
     }
 
     private fun validateInputs(email: String, password: String): Boolean {
@@ -141,7 +141,7 @@ class LoginFragment : Fragment() {
             }
         } catch (e: Exception) {
             // Navigation hatası durumunda log at ve görmezden gel
-            android.util.Log.e("LoginFragment", "Navigation error: ${e.message}")
+            android.util.Log.e("talha", "Navigation error: ${e.message}")
         }
     }
 

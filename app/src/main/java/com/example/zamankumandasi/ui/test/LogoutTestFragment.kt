@@ -9,20 +9,15 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.example.zamankumandasi.R
-import com.example.zamankumandasi.data.manager.LogoutManager
 import com.example.zamankumandasi.ui.viewmodel.AuthViewModel
-import com.example.zamankumandasi.utils.performLogoutWithManager
-import com.example.zamankumandasi.utils.performQuickLogout
+import com.example.zamankumandasi.utils.SimpleLogout
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class LogoutTestFragment : Fragment() {
 
     private val authViewModel: AuthViewModel by viewModels()
     
-    @Inject
-    lateinit var logoutManager: LogoutManager
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,12 +36,13 @@ class LogoutTestFragment : Fragment() {
 
         // Normal logout (onay dialog'u ile)
         btnNormalLogout.setOnClickListener {
-            performLogoutWithManager(authViewModel, logoutManager)
+            SimpleLogout.confirmAndSignOut(this, authViewModel)
         }
 
         // Hızlı logout (onay dialog'u olmadan)
         btnQuickLogout.setOnClickListener {
-            performQuickLogout(authViewModel, logoutManager)
+            // Quick logout: direkt olarak ViewModel üzerinden çıkış yap
+            authViewModel.signOut()
         }
 
         // Auth durumunu gözle

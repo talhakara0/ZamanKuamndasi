@@ -24,6 +24,9 @@ class AuthViewModel @Inject constructor(
     
     private val _children = MutableLiveData<List<User>>()
     val children: LiveData<List<User>> = _children
+    
+    private val _parentInfo = MutableLiveData<User?>()
+    val parentInfo: LiveData<User?> = _parentInfo
 
     init {
         checkCurrentUser()
@@ -68,13 +71,16 @@ class AuthViewModel @Inject constructor(
     fun signOut() {
         _authState.value = AuthState.Loading
         
+        android.util.Log.d("talha", "signOut: başlatıldı")
+
         viewModelScope.launch {
             try {
                 // 1. Repository'den çıkış yap
                 val result = authRepository.signOut()
-                
+
                 result.fold(
                     onSuccess = {
+                        android.util.Log.d("talha", "signOut: repository başarılı döndü - clearUserData çağrılıyor")
                         // 2. Tüm kullanıcı verilerini temizle
                         clearUserData()
                         
@@ -82,11 +88,13 @@ class AuthViewModel @Inject constructor(
                         _authState.value = AuthState.SignedOut
                     },
                     onFailure = { exception ->
+                        android.util.Log.e("talha", "signOut: repository hata: ${exception.message}")
                         _authState.value = AuthState.Error("Çıkış işlemi sırasında hata: ${exception.message}")
                     }
                 )
                 
             } catch (e: Exception) {
+                android.util.Log.e("talha", "signOut exception: ${e.message}")
                 _authState.value = AuthState.Error("Çıkış işlemi sırasında hata: ${e.message}")
             }
         }
@@ -95,6 +103,7 @@ class AuthViewModel @Inject constructor(
     private fun clearUserData() {
         _currentUser.value = null
         _children.value = emptyList()
+        _parentInfo.value = null
         // Diğer kullanıcı verilerini de temizle
     }
 
@@ -134,7 +143,7 @@ class AuthViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                android.util.Log.e("AuthViewModel", "checkCurrentUser error: ${e.message}")
+                android.util.Log.e("talha", "checkCurrentUser error: ${e.message}")
             }
         }
     }
@@ -143,6 +152,13 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             val childrenList = authRepository.getChildrenByParent(parentId)
             _children.value = childrenList
+        }
+    }
+    
+    fun loadParentInfo(childId: String) {
+        viewModelScope.launch {
+            val parent = authRepository.getParentByChildId(childId)
+            _parentInfo.value = parent
         }
     }
 
