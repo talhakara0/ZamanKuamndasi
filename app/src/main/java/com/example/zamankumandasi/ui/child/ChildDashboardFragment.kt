@@ -19,9 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.zamankumandasi.R
-// ...existing imports...
 import com.example.zamankumandasi.data.model.AppUsage
-import com.example.zamankumandasi.data.model.UserType
 import com.example.zamankumandasi.databinding.FragmentChildDashboardBinding
 import com.example.zamankumandasi.service.AppUsageService
 import com.example.zamankumandasi.ui.UsageAccessActivity
@@ -58,27 +56,16 @@ class ChildDashboardFragment : Fragment() {
 
         Log.d("talha", "ChildDashboardFragment açıldı")
 
-        // Fragment'teki toolbar menüsünü aktif et
-        val toolbar = binding.toolbar
-        toolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_logout -> {
-                    Log.d("talha", "ChildDashboard: Toolbar çıkış menu item seçildi")
-                    SimpleLogout.confirmAndSignOut(this, authViewModel)
-                    true
-                }
-                else -> false
-            }
-        }
+        // Classic menü yaklaşımı
+        setHasOptionsMenu(true)
+        
+        // Eşleşme durumunu sıfırla (önceki ekranlardan kalan değerleri temizle)
+        authViewModel.clearPairingState()
 
-        // Eski setHasOptionsMenu'yu kaldır
-        // setHasOptionsMenu(true)
-        // Network kontrol disabled - internet varken yanlış uyarı vermesin
-        // checkNetworkStatus()
         setupViews()
         setupRecyclerView()
         observeCurrentUser()
-    observeAuthState()
+        observeAuthState()
         observeAppUsage()
 
         if (!hasUsageStatsPermission(requireContext())) {
@@ -101,15 +88,137 @@ class ChildDashboardFragment : Fragment() {
         // Toolbar'ı Activity'ye set et
         (requireActivity() as androidx.appcompat.app.AppCompatActivity).setSupportActionBar(binding.toolbar)
         
+        // Menü zaten layout'ta tanımlanmış, tekrar inflate etmeye gerek yok
+        // binding.toolbar.inflateMenu(R.menu.menu_child_dashboard)
+        
         // Refresh butonu
         binding.btnRefresh.setOnClickListener {
             checkAndLoadUsageData()
         }
+
+        // Eşleşme butonu - listener'ı observeCurrentUser'da ayarlayacağız
+        // binding.btnPairNow.setOnClickListener artık burada yok
     }
     
     private fun checkNetworkStatus() {
         // Network kontrolü tamamen devre dışı - internet var kabul ediliyor
         Log.d("talha", "Network: ✅ İnternet kontrolü devre dışı (varsayılan: bağlı)")
+    }
+
+    private fun showPairingDialog() {
+        // Kodu tamamen temizleyip yeniden yazıyoruz
+        
+        // Dialog view'ını inflate et
+        val dialogView = layoutInflater.inflate(R.layout.dialog_pairing_code, null)
+        val til = dialogView.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.tilPairingCode)
+        val et = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etPairingCode)
+        val progress = dialogView.findViewById<android.widget.ProgressBar>(R.id.progress)
+        
+        // Dialog objesini oluştur
+        val alertDialog = android.app.AlertDialog.Builder(requireContext())
+            .setTitle("Ebeveyn ile Eşleş")
+            .setView(dialogView)
+            .setCancelable(false) // Geri tuşuyla kapatılamaz
+            .setPositiveButton("Eşleş", null) // Listener null, aşağıda override edilecek
+            .setNegativeButton("İptal") { dialog, _ -> 
+                dialog.dismiss() 
+                authViewModel.clearPairingState()
+            }
+            .create()
+
+        // Dialog gösterildiğinde yapılacaklar
+        alertDialog.setOnShowListener { dialog ->
+            val positiveButton = (dialog as android.app.AlertDialog).getButton(android.app.AlertDialog.BUTTON_POSITIVE)
+            
+            // Pozitif buton için tıklama işleyicisi
+            positiveButton.setOnClickListener { 
+                // Önce hatayı temizle
+                til.error = null
+                
+                // Kodu doğrula
+                val code = et.text?.toString()?.trim() ?: ""
+                when {
+                    code.isEmpty() -> {
+                        til.error = "Eşleştirme kodu gerekli"
+                    }
+                    code.length != 6 -> {
+                        til.error = "Eşleştirme kodu 6 haneli olmalı"
+                    }
+                    !code.all { it.isDigit() } -> {
+                        til.error = "Sadece rakam girmelisiniz"
+                    }
+                    else -> {
+                        // Doğrulama başarılı, eşleştirme yap
+                        progress.visibility = View.VISIBLE
+                        positiveButton.isEnabled = false
+                        authViewModel.pairWithParent(code)
+                    }
+                }
+            }
+        }
+        
+        // Dialog açılmadan önce pairing state'i temizle
+        authViewModel.clearPairingState()
+        
+        // Dialog'u göster
+        alertDialog.show()
+        
+        // State observer tanımla - sadece bu dialog için
+        val stateObserver = object : androidx.lifecycle.Observer<AuthViewModel.PairingState?> {
+            override fun onChanged(state: AuthViewModel.PairingState?) {
+                Log.d("talha", "PairingState değişti: $state")
+                when (state) {
+                    is AuthViewModel.PairingState.Loading -> {
+                        Log.d("talha", "Eşleştirme işlemi başladı")
+                        progress.visibility = View.VISIBLE
+                        alertDialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).isEnabled = false
+                    }
+                    is AuthViewModel.PairingState.Success -> {
+                        Log.d("talha", "Eşleştirme başarılı: ${state.user}")
+                        
+                        // Eşleşme başarılı mesajı göster
+                        Toast.makeText(requireContext(), "Ebeveyn ile başarıyla eşleştirildi!", Toast.LENGTH_LONG).show()
+                        
+                        // UI güncelle
+                        binding.tvParentInfo.text = "Ebeveyn bilgisi yükleniyor..."
+                        binding.btnPairNow.visibility = View.GONE
+                        
+                        // Parent bilgisini yükle
+                        authViewModel.loadParentInfo(state.user.id)
+                        
+                        // Dialog'u kapat
+                        alertDialog.dismiss()
+                        
+                        // State'i temizle
+                        authViewModel.clearPairingState()
+                    }
+                    is AuthViewModel.PairingState.Error -> {
+                        Log.e("talha", "Eşleştirme hatası: ${state.message}")
+                        
+                        // Eşleşme hatası
+                        progress.visibility = View.GONE
+                        til.error = state.message
+                        alertDialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).isEnabled = true
+                    }
+                    null -> {
+                        Log.d("talha", "PairingState temizlendi (null)")
+                        // Başlangıç durumu - hiçbir şey yapma
+                        progress.visibility = View.GONE
+                    }
+                }
+            }
+        }
+        
+        // Observer'ı ekle
+        authViewModel.pairingState.observe(viewLifecycleOwner, stateObserver)
+        
+        // Dialog kapandığında observer'ı kaldır ve state'i temizle
+        alertDialog.setOnDismissListener {
+            Log.d("talha", "Dialog kapatıldı - observer kaldırılıyor")
+            authViewModel.pairingState.removeObserver(stateObserver)
+            // State'i sadece başarısız durumlarda veya iptal edildiğinde temizle
+            // Başarılı durumda zaten yukarıda temizleniyor
+        }
     }
 
     private fun setupRecyclerView() {
@@ -131,11 +240,22 @@ class ChildDashboardFragment : Fragment() {
             user?.let {
                 binding.tvUserEmail.text = it.email
                 
-                // Ebeveyn bilgisi yüklenene kadar geçici metin göster
+                // Ebeveyn eşleşme durumunu kontrol et
                 if (it.parentId == null) {
+                    // Henüz eşleştirilmemiş
                     binding.tvParentInfo.text = "Henüz eşleştirilmedi"
+                    binding.btnPairNow.visibility = View.VISIBLE
+                    
+                    // Eşleşme butonuna tıklama işleyicisini yeniden ayarla
+                    binding.btnPairNow.setOnClickListener {
+                        Log.d("talha", "Eşleşme butonuna tıklandı - showPairingDialog çağrılıyor")
+                        showPairingDialog()
+                    }
                 } else {
+                    // Eşleştirilmiş - parent bilgisini yükle
                     binding.tvParentInfo.text = "Ebeveyn bilgisi yükleniyor..."
+                    binding.btnPairNow.visibility = View.GONE
+                    
                     // Parent bilgisini yükle
                     authViewModel.loadParentInfo(it.id)
                 }
@@ -384,6 +504,24 @@ class ChildDashboardFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    // Classic menü fonksiyonları
+    override fun onCreateOptionsMenu(menu: android.view.Menu, inflater: android.view.MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        Log.d("talha", "ChildDashboard: onCreateOptionsMenu çağrıldı")
+        inflater.inflate(R.menu.menu_child_dashboard, menu)
+    }
+
+    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_logout -> {
+                Log.d("talha", "ChildDashboard: Options menüden çıkış seçildi")
+                SimpleLogout.confirmAndSignOut(this, authViewModel)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun startAppUsageService() {

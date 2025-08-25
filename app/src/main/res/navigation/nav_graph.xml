@@ -104,6 +104,10 @@
             app:destination="@id/loginFragment"
             app:popUpTo="@id/loginFragment"
             app:popUpToInclusive="true" />
+
+        <action
+            android:id="@+id/action_childDashboardFragment_to_pairingFragment"
+            app:destination="@id/pairingFragment" />
     </fragment>
 
     <fragment

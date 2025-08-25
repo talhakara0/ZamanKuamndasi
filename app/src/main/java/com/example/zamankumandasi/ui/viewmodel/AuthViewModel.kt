@@ -28,7 +28,13 @@ class AuthViewModel @Inject constructor(
     private val _parentInfo = MutableLiveData<User?>()
     val parentInfo: LiveData<User?> = _parentInfo
 
+    // Eşleştirme sonuçları için ayrı state (authState'den bağımsız)
+    private val _pairingState = MutableLiveData<PairingState?>()
+    val pairingState: LiveData<PairingState?> = _pairingState
+
     init {
+        // Başlangıçta pairing state null
+        _pairingState.value = null
         checkCurrentUser()
     }
 
@@ -108,21 +114,26 @@ class AuthViewModel @Inject constructor(
     }
 
     fun pairWithParent(pairingCode: String) {
-        _authState.value = AuthState.Loading
-        
+        _pairingState.value = PairingState.Loading
+        // İstenirse eşleştirme boyunca genel authState'i etkilemeyebiliriz; mevcut ekranlar pairingState'i dinleyecek
         viewModelScope.launch {
             val result = authRepository.pairWithParent(pairingCode)
-            
             result.fold(
                 onSuccess = { user ->
                     _currentUser.value = user
+                    _pairingState.value = PairingState.Success(user)
+                    // Opsiyonel: genel authState'i de güncelle
                     _authState.value = AuthState.Success(user)
                 },
                 onFailure = { exception ->
-                    _authState.value = AuthState.Error(exception.message ?: "Eşleştirme başarısız")
+                    _pairingState.value = PairingState.Error(exception.message ?: "Eşleştirme başarısız")
                 }
             )
         }
+    }
+
+    fun clearPairingState() {
+        _pairingState.value = null
     }
 
     private fun checkCurrentUser() {
@@ -167,5 +178,11 @@ class AuthViewModel @Inject constructor(
         data class Success(val user: User) : AuthState()
         data class Error(val message: String) : AuthState()
         object SignedOut : AuthState()
+    }
+
+    sealed class PairingState {
+        object Loading : PairingState()
+        data class Success(val user: User) : PairingState()
+        data class Error(val message: String) : PairingState()
     }
 }

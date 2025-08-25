@@ -4,7 +4,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
@@ -14,6 +13,7 @@ import androidx.core.app.NotificationCompat
 import com.example.zamankumandasi.R
 import com.example.zamankumandasi.data.repository.AppUsageRepository
 import com.example.zamankumandasi.data.repository.AuthRepository
+import com.example.zamankumandasi.ui.BlockerActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import javax.inject.Inject
@@ -33,7 +33,7 @@ class AppUsageService : Service() {
     companion object {
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "app_usage_service"
-        private const val TRACKING_INTERVAL = 30000L // 30 saniye
+    private const val TRACKING_INTERVAL = 15000L // 15 saniye
     }
 
     override fun onCreate() {
@@ -60,6 +60,7 @@ class AppUsageService : Service() {
         serviceScope.launch {
             while (isTracking) {
                 trackAppUsage()
+                enforceLimits()
                 delay(TRACKING_INTERVAL)
             }
         }
@@ -126,6 +127,48 @@ class AppUsageService : Service() {
             // Hata durumunda loglama yapılabilir
             e.printStackTrace()
         }
+    }
+
+    private suspend fun enforceLimits() {
+        try {
+            val usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+            val endTime = System.currentTimeMillis()
+            val startTime = endTime - 60_000 // son 1 dakika olayları yeterli
+
+            val events = usageStatsManager.queryEvents(startTime, endTime)
+            var lastForegroundPackage: String? = null
+            val event = android.app.usage.UsageEvents.Event()
+            while (events.hasNextEvent()) {
+                events.getNextEvent(event)
+                if (event.eventType == android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED) {
+                    lastForegroundPackage = event.packageName
+                }
+            }
+
+            val currentPackage = lastForegroundPackage ?: return
+
+            val user = authRepository.getCurrentUser() ?: return
+            val usage = appUsageRepository.getAppUsageByPackage(user.id, currentPackage) ?: return
+
+            // Limit aşıldıysa engelleme ekranını aç
+            if (usage.dailyLimit > 0 && usage.usedTime >= usage.dailyLimit && !isOurPackage(currentPackage)) {
+                launchBlocker(currentPackage, usage.appName)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun isOurPackage(pkg: String): Boolean = pkg == packageName
+
+    private fun launchBlocker(packageName: String, appName: String) {
+        val intent = Intent(this, BlockerActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            putExtra(BlockerActivity.EXTRA_PACKAGE, packageName)
+            putExtra(BlockerActivity.EXTRA_APP_NAME, appName)
+            putExtra(BlockerActivity.EXTRA_REASON, "Günlük süre sınırı aşıldı")
+        }
+        startActivity(intent)
     }
 
     private fun createNotificationChannel() {

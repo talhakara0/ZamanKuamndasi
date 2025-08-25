@@ -39,6 +39,14 @@
             android:exported="false"
             android:theme="@style/Theme.ZamanKumandasi" />
 
+        <!-- Bloklama ekranı -->
+        <activity
+            android:name=".ui.BlockerActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.ZamanKumandasi" />
+
         <!-- Foreground Service -->
         <service
             android:name=".service.AppUsageService"
