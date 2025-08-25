@@ -49,7 +49,8 @@ class AppUsageRepository @Inject constructor(
     suspend fun saveAppUsage(appUsage: AppUsage) {
         Log.d("talha", "saveAppUsage çağrıldı: $appUsage")
         try {
-            database.reference.child("app_usage").child(appUsage.id).setValue(appUsage).await()
+            val safePackageName = appUsage.packageName.replace(".", "_")
+            database.reference.child("app_usage").child(appUsage.userId).child(safePackageName).setValue(appUsage).await()
             Log.d("talha", "saveAppUsage başarılı: ${appUsage.id}")
         } catch (e: Exception) {
             Log.e("talha", "saveAppUsage hata: ${e.message}")
@@ -60,7 +61,7 @@ class AppUsageRepository @Inject constructor(
     suspend fun getAppUsageByUser(userId: String): List<AppUsage> {
         Log.d("talha", "getAppUsageByUser çağrıldı: userId=$userId")
         try {
-            val snapshot = database.reference.child("app_usage").orderByChild("userId").equalTo(userId).get().await()
+            val snapshot = database.reference.child("app_usage").child(userId).get().await()
             val result = snapshot.children.mapNotNull { it.getValue(AppUsage::class.java) }
             Log.d("talha", "getAppUsageByUser başarılı: ${result.size} kayıt bulundu")
             return result
@@ -73,7 +74,8 @@ class AppUsageRepository @Inject constructor(
     suspend fun updateAppUsage(appUsage: AppUsage) {
         Log.d("talha", "updateAppUsage çağrıldı: $appUsage")
         try {
-            database.reference.child("app_usage").child(appUsage.id).setValue(appUsage).await()
+            val safePackageName = appUsage.packageName.replace(".", "_")
+            database.reference.child("app_usage").child(appUsage.userId).child(safePackageName).setValue(appUsage).await()
             Log.d("talha", "updateAppUsage başarılı: ${appUsage.id}")
         } catch (e: Exception) {
             Log.e("talha", "updateAppUsage hata: ${e.message}")
@@ -83,8 +85,9 @@ class AppUsageRepository @Inject constructor(
     suspend fun getAppUsageByPackage(userId: String, packageName: String): AppUsage? {
         Log.d("talha", "getAppUsageByPackage çağrıldı: userId=$userId, packageName=$packageName")
         try {
-            val snapshot = database.reference.child("app_usage").orderByChild("userId").equalTo(userId).get().await()
-            val result = snapshot.children.mapNotNull { it.getValue(AppUsage::class.java) }.firstOrNull { it.packageName == packageName }
+            val safePackageName = packageName.replace(".", "_")
+            val snapshot = database.reference.child("app_usage").child(userId).child(safePackageName).get().await()
+            val result = snapshot.getValue(AppUsage::class.java)
             Log.d("talha", "getAppUsageByPackage başarılı: $result")
             return result
         } catch (e: Exception) {
@@ -114,7 +117,8 @@ class AppUsageRepository @Inject constructor(
                     dailyLimit = dailyLimit,
                     isBlocked = existingUsage.usedTime >= dailyLimit && dailyLimit > 0
                 )
-                database.reference.child("app_usage").child(existingUsage.id).setValue(updatedUsage).await()
+                val safePackageName = packageName.replace(".", "_")
+                database.reference.child("app_usage").child(userId).child(safePackageName).setValue(updatedUsage).await()
                 Log.d("talha", "updateDailyLimit başarılı: ${existingUsage.id}")
             } else {
                 val packageManager = context.packageManager
@@ -135,7 +139,8 @@ class AppUsageRepository @Inject constructor(
                     lastUsed = System.currentTimeMillis(),
                     isBlocked = false
                 )
-                database.reference.child("app_usage").child(newUsage.id).setValue(newUsage).await()
+                val safePackageName = packageName.replace(".", "_")
+                database.reference.child("app_usage").child(userId).child(safePackageName).setValue(newUsage).await()
                 Log.d("talha", "updateDailyLimit yeni kayıt başarılı: ${newUsage.id}")
             }
             Result.success(Unit)
