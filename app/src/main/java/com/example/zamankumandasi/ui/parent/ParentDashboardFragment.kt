@@ -85,7 +85,9 @@ class ParentDashboardFragment : Fragment() {
             onChildClick = { child ->
                 // Çocuk detayına git (kullanım verisi)
                 // Premium değilse arada reklam göster
-                com.example.zamankumandasi.ads.AdManager.maybeShowInterstitial(requireActivity())
+                if (authViewModel.currentUser.value?.isPremium != true) {
+                    com.example.zamankumandasi.ads.AdManager.maybeShowInterstitial(requireActivity())
+                }
                 val bundle = android.os.Bundle().apply {
                     putString("childId", child.id)
                     putString("childEmail", child.email)

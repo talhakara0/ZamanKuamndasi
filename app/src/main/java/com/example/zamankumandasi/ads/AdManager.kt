@@ -26,7 +26,12 @@ object AdManager {
     fun init(context: Context) {
         // Safe to call multiple times
         MobileAds.initialize(context)
-        preload(context)
+        // Initialize premium state from stored session so we gate ads ASAP
+        try {
+            val prefs = context.getSharedPreferences("zaman_kumandasi_session", Context.MODE_PRIVATE)
+            isPremiumUser = prefs.getBoolean("is_premium", false)
+        } catch (_: Exception) { }
+        // Don't preload here; wait until maybeShowInterstitial is called
     }
 
     fun setPremium(enabled: Boolean) {
@@ -36,6 +41,8 @@ object AdManager {
             interstitialAd = null
         }
     }
+
+    fun isPremiumEnabled(): Boolean = isPremiumUser
 
     fun preload(context: Context) {
     if (isPremiumUser) return

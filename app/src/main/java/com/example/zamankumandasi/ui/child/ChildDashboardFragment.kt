@@ -97,7 +97,9 @@ class ChildDashboardFragment : Fragment() {
         // Refresh butonu
         binding.btnRefresh.setOnClickListener {
             // Yenile butonuna basılınca arada reklam göster (frekans limiti geçerliyse)
-            AdManager.maybeShowInterstitial(requireActivity())
+            if (authViewModel.currentUser.value?.isPremium != true) {
+                AdManager.maybeShowInterstitial(requireActivity())
+            }
             checkAndLoadUsageData()
         }
 

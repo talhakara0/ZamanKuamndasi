@@ -46,8 +46,7 @@ class MainActivity : AppCompatActivity() {
                     isLoggedOut = false
                     // Premium durumunu reklam yöneticisine ilet
                     AdManager.setPremium(authState.user.isPremium)
-                    // Başarılı girişten sonra arada bir reklam göster
-                    AdManager.maybeShowInterstitial(this)
+                    // Premium durumundan hemen sonra reklam denemesi yapma (yarış koşulu riskini azalt)
                 }
                 else -> { /* Diğer durumlar */ }
             }
@@ -64,15 +63,15 @@ class MainActivity : AppCompatActivity() {
                     when (user.userType) {
                         UserType.PARENT -> {
                             navController.navigate(R.id.action_loginFragment_to_parentDashboardFragment)
-                            AdManager.maybeShowInterstitial(this)
+                            if (!user.isPremium) AdManager.maybeShowInterstitial(this)
                         }
                         UserType.CHILD -> {
                             if (user.parentId == null) {
                                 navController.navigate(R.id.action_loginFragment_to_pairingFragment)
-                                AdManager.maybeShowInterstitial(this)
+                                if (!user.isPremium) AdManager.maybeShowInterstitial(this)
                             } else {
                                 navController.navigate(R.id.action_loginFragment_to_childDashboardFragment)
-                                AdManager.maybeShowInterstitial(this)
+                                if (!user.isPremium) AdManager.maybeShowInterstitial(this)
                             }
                         }
                     }
@@ -99,9 +98,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun scheduleInScreenAd() {
         cancelInScreenAd()
+        // Premium ise hiçbir zaman planlama yapma
+    if (AdManager.isPremiumEnabled()) return
         inScreenAdRunnable = Runnable {
-            // Ekranda bir süre kalındı; arada bir reklam göstermeyi dene
-            AdManager.maybeShowInterstitial(this)
+            if (authViewModel.currentUser.value?.isPremium != true) {
+                AdManager.maybeShowInterstitial(this)
+            }
         }
         adHandler.postDelayed(inScreenAdRunnable!!, UI_STAY_DELAY_MS)
     }
