@@ -150,9 +150,17 @@ class AppUsageService : Service() {
             val user = authRepository.getCurrentUser() ?: return
             val usage = appUsageRepository.getAppUsageByPackage(user.id, currentPackage) ?: return
 
-            // Limit aşıldıysa engelleme ekranını aç
-            if (usage.dailyLimit > 0 && usage.usedTime >= usage.dailyLimit && !isOurPackage(currentPackage)) {
-                launchBlocker(currentPackage, usage.appName)
+            // Ebeveyn tarafından belirlenen limit kontrolü - sadece çocuk hesapları için
+            if (user.userType == com.example.zamankumandasi.data.model.UserType.CHILD) {
+                // Ebeveyn limitlerini kontrol et
+                if (usage.dailyLimit > 0 && usage.usedTime >= usage.dailyLimit && !isOurPackage(currentPackage)) {
+                    launchBlocker(currentPackage, usage.appName, "Ebeveynin belirlediği günlük süre sınırı aşıldı")
+                }
+            } else {
+                // Ebeveyn hesapları için normal limit kontrolü
+                if (usage.dailyLimit > 0 && usage.usedTime >= usage.dailyLimit && !isOurPackage(currentPackage)) {
+                    launchBlocker(currentPackage, usage.appName, "Günlük süre sınırı aşıldı")
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -161,12 +169,12 @@ class AppUsageService : Service() {
 
     private fun isOurPackage(pkg: String): Boolean = pkg == packageName
 
-    private fun launchBlocker(packageName: String, appName: String) {
+    private fun launchBlocker(packageName: String, appName: String, reason: String = "Günlük süre sınırı aşıldı") {
         val intent = Intent(this, BlockerActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             putExtra(BlockerActivity.EXTRA_PACKAGE, packageName)
             putExtra(BlockerActivity.EXTRA_APP_NAME, appName)
-            putExtra(BlockerActivity.EXTRA_REASON, "Günlük süre sınırı aşıldı")
+            putExtra(BlockerActivity.EXTRA_REASON, reason)
         }
         startActivity(intent)
     }

@@ -149,6 +149,51 @@ class AppUsageRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    suspend fun setDailyLimitForChild(childUserId: String, packageName: String, appName: String, limitInMinutes: Int, parentUserId: String): Result<Unit> {
+        Log.d("talha", "setDailyLimitForChild çağrıldı: childUserId=$childUserId, packageName=$packageName, appName=$appName, limitInMinutes=$limitInMinutes, parentUserId=$parentUserId")
+        return try {
+            // Ebeveyn kontrolü - sadece doğru ebeveyn limit belirleyebilir
+            val childSnapshot = database.reference.child("users").child(childUserId).get().await()
+            val child = childSnapshot.getValue(com.example.zamankumandasi.data.model.User::class.java)
+            
+            if (child?.parentId != parentUserId) {
+                return Result.failure(Exception("Bu çocuk hesabına limit belirleme yetkiniz yok"))
+            }
+
+            val limitInMillis = limitInMinutes * 60 * 1000L
+            val existingUsage = getAppUsageByPackage(childUserId, packageName)
+            
+            if (existingUsage != null) {
+                val updatedUsage = existingUsage.copy(
+                    dailyLimit = limitInMillis,
+                    isBlocked = existingUsage.usedTime >= limitInMillis && limitInMillis > 0
+                )
+                val safePackageName = packageName.replace(".", "_")
+                database.reference.child("app_usage").child(childUserId).child(safePackageName).setValue(updatedUsage).await()
+                Log.d("talha", "setDailyLimitForChild güncelleme başarılı: ${existingUsage.id}")
+            } else {
+                val newUsage = AppUsage(
+                    id = "${childUserId}_${packageName}",
+                    userId = childUserId,
+                    packageName = packageName,
+                    appName = appName,
+                    dailyLimit = limitInMillis,
+                    usedTime = 0,
+                    lastUsed = System.currentTimeMillis(),
+                    isBlocked = false
+                )
+                val safePackageName = packageName.replace(".", "_")
+                database.reference.child("app_usage").child(childUserId).child(safePackageName).setValue(newUsage).await()
+                Log.d("talha", "setDailyLimitForChild yeni kayıt başarılı: ${newUsage.id}")
+            }
+            
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("talha", "setDailyLimitForChild hata: ${e.message}")
+            Result.failure(e)
+        }
+    }
     
     suspend fun updateUsedTime(userId: String, packageName: String, usedTime: Long) {
         Log.d("talha", "updateUsedTime çağrıldı: userId=$userId, packageName=$packageName, usedTime=${usedTime}ms (${usedTime/1000/60}dk)")
@@ -167,13 +212,20 @@ class AppUsageRepository @Inject constructor(
                     usedTime
                 }
                 
+                // Ebeveyn tarafından belirlenen limit kontrolü - çocuk hesabı için
+                val shouldBlock = if (existingUsage.dailyLimit > 0) {
+                    newUsedTime >= existingUsage.dailyLimit
+                } else {
+                    false
+                }
+                
                 val updatedUsage = existingUsage.copy(
                     usedTime = newUsedTime,
                     lastUsed = System.currentTimeMillis(),
-                    isBlocked = newUsedTime >= existingUsage.dailyLimit && existingUsage.dailyLimit > 0
+                    isBlocked = shouldBlock
                 )
                 updateAppUsage(updatedUsage)
-                Log.d("talha", "Mevcut kullanım güncellendi: ${newUsedTime}ms (${newUsedTime/1000/60}dk)")
+                Log.d("talha", "Mevcut kullanım güncellendi: ${newUsedTime}ms (${newUsedTime/1000/60}dk), Bloklu: $shouldBlock")
             } else {
                 val packageManager = context.packageManager
                 val appName = try {
@@ -203,13 +255,41 @@ class AppUsageRepository @Inject constructor(
     }
     
     suspend fun resetDailyUsage(userId: String) {
-        val userApps = getAppUsageByUser(userId)
-        userApps.forEach { appUsage ->
-            val resetUsage = appUsage.copy(
-                usedTime = 0,
-                isBlocked = false
-            )
-            updateAppUsage(resetUsage)
+        try {
+            val userApps = getAppUsageByUser(userId)
+            userApps.forEach { appUsage ->
+                // Ebeveyn tarafından belirlenen limiti koru, sadece kullanım süresini sıfırla
+                val resetUsage = appUsage.copy(
+                    usedTime = 0,
+                    isBlocked = false,
+                    lastUsed = System.currentTimeMillis()
+                )
+                updateAppUsage(resetUsage)
+            }
+            Log.d("talha", "resetDailyUsage başarılı: $userId için ${userApps.size} uygulama sıfırlandı")
+        } catch (e: Exception) {
+            Log.e("talha", "resetDailyUsage hata: ${e.message}")
+        }
+    }
+    
+    suspend fun getChildUsageByParent(parentId: String): Map<String, List<AppUsage>> {
+        Log.d("talha", "getChildUsageByParent çağrıldı: parentId=$parentId")
+        return try {
+            // Önce bu ebeveynin çocuklarını al
+            val childrenSnapshot = database.reference.child("users").orderByChild("parentId").equalTo(parentId).get().await()
+            val children = childrenSnapshot.children.mapNotNull { it.getValue(com.example.zamankumandasi.data.model.User::class.java) }
+            
+            val result = mutableMapOf<String, List<AppUsage>>()
+            children.forEach { child ->
+                val childUsage = getAppUsageByUser(child.id)
+                result[child.id] = childUsage
+            }
+            
+            Log.d("talha", "getChildUsageByParent başarılı: ${children.size} çocuk bulundu")
+            result
+        } catch (e: Exception) {
+            Log.e("talha", "getChildUsageByParent hata: ${e.message}")
+            emptyMap()
         }
     }
 }

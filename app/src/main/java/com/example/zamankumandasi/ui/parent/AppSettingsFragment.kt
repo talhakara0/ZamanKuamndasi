@@ -116,7 +116,8 @@ class AppSettingsFragment : Fragment() {
         val btnCancel = dialogView.findViewById<Button>(R.id.btnCancel)
         val btnSave = dialogView.findViewById<Button>(R.id.btnSave)
         
-        tvAppName.text = "$appName (${authViewModel.children.value?.find { it.id == childId }?.email ?: "Bilinmeyen"})"
+        val selectedChild = authViewModel.children.value?.find { it.id == childId }
+        tvAppName.text = "$appName için ${selectedChild?.email ?: "Bilinmeyen"} hesabına limit belirleniyor"
         
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogView)
@@ -131,13 +132,35 @@ class AppSettingsFragment : Fragment() {
             val minutes = etLimitMinutes.text.toString().toIntOrNull() ?: 0
             val totalMinutes = hours * 60 + minutes
             
-            appUsageViewModel.updateDailyLimit(
-                userId = childId,
-                packageName = packageName,
-                dailyLimit = totalMinutes * 60 * 1000L // dakikayı milisaniyeye çevir
-            )
+            if (totalMinutes <= 0) {
+                // Geçersiz limit uyarısı
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Hata")
+                    .setMessage("Lütfen geçerli bir süre limiti girin.")
+                    .setPositiveButton("Tamam", null)
+                    .show()
+                return@setOnClickListener
+            }
             
-            dialog.dismiss()
+            // Ebeveyn ID'sini al
+            val currentUser = authViewModel.currentUser.value
+            if (currentUser?.userType == com.example.zamankumandasi.data.model.UserType.PARENT) {
+                appUsageViewModel.setDailyLimitForChild(
+                    childUserId = childId,
+                    packageName = packageName,
+                    appName = appName,
+                    limitInMinutes = totalMinutes,
+                    parentUserId = currentUser.id
+                )
+                dialog.dismiss()
+            } else {
+                // Ebeveyn değilse hata ver
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Hata")
+                    .setMessage("Sadece ebeveyn hesapları limit belirleyebilir.")
+                    .setPositiveButton("Tamam", null)
+                    .show()
+            }
         }
         
         dialog.show()
@@ -163,7 +186,12 @@ class AppSettingsFragment : Fragment() {
         
         appUsageViewModel.error.observe(viewLifecycleOwner) { error ->
             error?.let {
-                // TODO: Hata mesajını göster
+                // Hata veya başarı mesajını göster
+                AlertDialog.Builder(requireContext())
+                    .setTitle(if (it.contains("başarıyla")) "Başarılı" else "Hata")
+                    .setMessage(it)
+                    .setPositiveButton("Tamam", null)
+                    .show()
             }
         }
     }

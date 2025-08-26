@@ -2,7 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
-    id("kotlin-kapt")
+    kotlin("kapt")
     id("kotlin-parcelize")
     id("com.google.dagger.hilt.android")
 }

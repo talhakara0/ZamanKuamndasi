@@ -127,6 +127,31 @@ class AppUsageViewModel @Inject constructor(
         }
     }
 
+    fun setDailyLimitForChild(childUserId: String, packageName: String, appName: String, limitInMinutes: Int, parentUserId: String) {
+        _loading.value = true
+        _error.value = null
+        
+        viewModelScope.launch {
+            try {
+                val result = appUsageRepository.setDailyLimitForChild(childUserId, packageName, appName, limitInMinutes, parentUserId)
+                result.fold(
+                    onSuccess = {
+                        _error.value = "Limit başarıyla ayarlandı"
+                        // Çocuğun kullanım verilerini yenile
+                        loadAppUsageByUser(childUserId)
+                    },
+                    onFailure = { exception ->
+                        _error.value = exception.message ?: "Limit ayarlanırken hata oluştu"
+                    }
+                )
+            } catch (e: Exception) {
+                _error.value = "Limit ayarlanırken hata: ${e.message}"
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
+
     fun saveAppUsage(appUsage: AppUsage) {
         viewModelScope.launch {
             try {
