@@ -22,9 +22,10 @@ class SessionManager @Inject constructor(
         private const val KEY_PARENT_ID = "parent_id"
         private const val KEY_PAIRING_CODE = "pairing_code"
         private const val KEY_OFFLINE_MODE = "offline_mode"
+    private const val KEY_IS_PREMIUM = "is_premium"
     }
     
-    fun setLoginSession(userId: String, email: String, userType: String, parentId: String? = null, pairingCode: String? = null) {
+    fun setLoginSession(userId: String, email: String, userType: String, parentId: String? = null, pairingCode: String? = null, isPremium: Boolean = false) {
         prefs.edit().apply {
             putBoolean(KEY_IS_LOGGED_IN, true)
             putString(KEY_USER_ID, userId)
@@ -33,6 +34,7 @@ class SessionManager @Inject constructor(
             putLong(KEY_LAST_LOGIN_TIME, System.currentTimeMillis())
             putString(KEY_PARENT_ID, parentId)
             putString(KEY_PAIRING_CODE, pairingCode)
+            putBoolean(KEY_IS_PREMIUM, isPremium)
             apply()
         }
     }
@@ -67,6 +69,14 @@ class SessionManager @Inject constructor(
     
     fun getPairingCode(): String? {
         return prefs.getString(KEY_PAIRING_CODE, null)
+    }
+    
+    fun isPremium(): Boolean {
+        return prefs.getBoolean(KEY_IS_PREMIUM, false)
+    }
+    
+    fun setPremium(isPremium: Boolean) {
+        prefs.edit().putBoolean(KEY_IS_PREMIUM, isPremium).apply()
     }
     
     fun setOfflineMode(isOffline: Boolean) {

@@ -39,10 +39,13 @@ class MainActivity : AppCompatActivity() {
                 is AuthViewModel.AuthState.SignedOut -> {
                     android.util.Log.d("talha", "Kullanıcı çıkış yaptı - otomatik yönlendirme engellendi")
                     isLoggedOut = true
+                    AdManager.setPremium(false)
                 }
                 is AuthViewModel.AuthState.Success -> {
                     // Başarılı giriş sonrası flag'i resetle
                     isLoggedOut = false
+                    // Premium durumunu reklam yöneticisine ilet
+                    AdManager.setPremium(authState.user.isPremium)
                     // Başarılı girişten sonra arada bir reklam göster
                     AdManager.maybeShowInterstitial(this)
                 }
@@ -56,6 +59,8 @@ class MainActivity : AppCompatActivity() {
             if (user != null && navController.currentDestination?.id == R.id.loginFragment && !isLoggedOut) {
                 try {
                     android.util.Log.d("talha", "Otomatik yönlendirme yapılıyor: ${user.userType}")
+                    // Premium durumunu reklam yöneticisine ilet
+                    AdManager.setPremium(user.isPremium)
                     when (user.userType) {
                         UserType.PARENT -> {
                             navController.navigate(R.id.action_loginFragment_to_parentDashboardFragment)

@@ -18,6 +18,7 @@ object AdManager {
     private var interstitialAd: InterstitialAd? = null
     private var lastShownAtMs: Long = 0
     private var loadInProgress = false
+    @Volatile private var isPremiumUser: Boolean = false
 
     // Frequency cap: at most once every 60 seconds
     private const val MIN_INTERVAL_MS = 60_000L
@@ -28,7 +29,16 @@ object AdManager {
         preload(context)
     }
 
+    fun setPremium(enabled: Boolean) {
+        isPremiumUser = enabled
+        if (enabled) {
+            // Drop any loaded ad to prevent accidental display
+            interstitialAd = null
+        }
+    }
+
     fun preload(context: Context) {
+    if (isPremiumUser) return
         if (loadInProgress || interstitialAd != null) return
         loadInProgress = true
         val request = AdRequest.Builder().build()
@@ -74,6 +84,7 @@ object AdManager {
     }
 
     fun maybeShowInterstitial(activity: Activity, force: Boolean = false) {
+    if (isPremiumUser) return
         val now = System.currentTimeMillis()
         if (!force && (now - lastShownAtMs) < MIN_INTERVAL_MS) {
             // Too soon; ensure a preload exists for later

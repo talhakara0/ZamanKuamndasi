@@ -161,9 +161,26 @@ class AppUsageRepository @Inject constructor(
                 return Result.failure(Exception("Bu çocuk hesabına limit belirleme yetkiniz yok"))
             }
 
-            val limitInMillis = limitInMinutes * 60 * 1000L
+            // Ebeveyn premium mu? Değilse 3 uygulama sınırı uygula
+            val parentSnapshot = database.reference.child("users").child(parentUserId).get().await()
+            val parentUser = parentSnapshot.getValue(com.example.zamankumandasi.data.model.User::class.java)
+
             val existingUsage = getAppUsageByPackage(childUserId, packageName)
+            val limitInMillis = limitInMinutes * 60 * 1000L
             
+            if (parentUser?.isPremium != true) {
+                // Ücretsiz ebeveyn: en fazla 3 farklı uygulama için limit konulabilir.
+                // Eğer mevcutUsage yoksa (yeni bir app limitlenecekse), mevcut limitli uygulama sayısını kontrol et.
+                if (existingUsage == null) {
+                    val currentUsages = getAppUsageByUser(childUserId)
+                    val limitedCount = currentUsages.count { it.dailyLimit > 0 }
+                    if (limitedCount >= 3) {
+                        return Result.failure(Exception("Ücretsiz planda en fazla 3 uygulamaya limit koyabilirsiniz. Premium'a geçin."))
+                    }
+                }
+            }
+
+
             if (existingUsage != null) {
                 val updatedUsage = existingUsage.copy(
                     dailyLimit = limitInMillis,

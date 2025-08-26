@@ -65,7 +65,7 @@ class ChildDashboardFragment : Fragment() {
 
         setupViews()
         setupRecyclerView()
-        observeCurrentUser()
+    observeCurrentUser()
         observeAuthState()
         observeAppUsage()
 
@@ -84,6 +84,8 @@ class ChildDashboardFragment : Fragment() {
             startAppUsageService()
         }
     }
+
+    
 
     private fun setupViews() {
         // Toolbar'ı Activity'ye set et
@@ -241,6 +243,8 @@ class ChildDashboardFragment : Fragment() {
         authViewModel.currentUser.observe(viewLifecycleOwner) { user ->
             Log.d("talha", "observeCurrentUser: user = $user")
             user?.let {
+                // Reklam premium durumu
+                AdManager.setPremium(it.isPremium)
                 binding.tvUserEmail.text = it.email
                 
                 // Ebeveyn eşleşme durumunu kontrol et

@@ -54,6 +54,11 @@ class ParentDashboardFragment : Fragment() {
                     SimpleLogout.confirmAndSignOut(this, authViewModel)
                     true
                 }
+                R.id.action_toggle_premium -> {
+                    val isPremium = authViewModel.currentUser.value?.isPremium == true
+                    authViewModel.setPremiumForCurrentUser(!isPremium)
+                    true
+                }
                 else -> false
             }
         }
@@ -79,6 +84,8 @@ class ParentDashboardFragment : Fragment() {
         childrenAdapter = ChildrenAdapter(
             onChildClick = { child ->
                 // Çocuk detayına git (kullanım verisi)
+                // Premium değilse arada reklam göster
+                com.example.zamankumandasi.ads.AdManager.maybeShowInterstitial(requireActivity())
                 val bundle = android.os.Bundle().apply {
                     putString("childId", child.id)
                     putString("childEmail", child.email)
@@ -102,6 +109,8 @@ class ParentDashboardFragment : Fragment() {
     private fun observeCurrentUser() {
         authViewModel.currentUser.observe(viewLifecycleOwner) { user ->
             user?.let {
+                // Premium reklam durumu
+                com.example.zamankumandasi.ads.AdManager.setPremium(it.isPremium)
                 binding.tvUserEmail.text = it.email
                 binding.tvPairingCode.text = "Eşleştirme Kodu: ${it.pairingCode}"
                 android.util.Log.d("talha", "Ebeveyn id: ${it.id}, email: ${it.email}")
@@ -109,6 +118,9 @@ class ParentDashboardFragment : Fragment() {
                 if (it.userType == UserType.PARENT) {
                     authViewModel.loadChildren(it.id)
                 }
+                // Menü başlığını güncelle (dev toggle)
+                val item = binding.toolbar.menu.findItem(R.id.action_toggle_premium)
+                item?.title = if (it.isPremium) "Premium'u kapat (dev)" else "Premium'a geç (dev)"
             }
         }
     }

@@ -24,14 +24,15 @@ class AuthRepository @Inject constructor(
                 email = email,
                 userType = userType,
                 parentId = if (userType == UserType.PARENT) null else null, // Ebeveyn için parentId null olarak ekleniyor
-                pairingCode = if (userType == UserType.PARENT) generatePairingCode() else null
+                pairingCode = if (userType == UserType.PARENT) generatePairingCode() else null,
+                isPremium = false
             )
             
             // RTDB'ye kullanıcıyı kaydet
             database.reference.child("users").child(user.id).setValue(user).await()
             
             // Session kaydet - tüm bilgilerle
-            sessionManager.setLoginSession(user.id, user.email, user.userType.name, user.parentId, user.pairingCode)
+            sessionManager.setLoginSession(user.id, user.email, user.userType.name, user.parentId, user.pairingCode, user.isPremium)
             
             Result.success(user)
         } catch (e: Exception) {
@@ -53,10 +54,21 @@ class AuthRepository @Inject constructor(
                 val userId = result.user?.uid ?: throw Exception("Kullanıcı bulunamadı")
                 
                 val userSnapshot = database.reference.child("users").child(userId).get().await()
-                val user = userSnapshot.getValue(User::class.java) ?: throw Exception("Kullanıcı bilgileri bulunamadı")
+                var user = userSnapshot.getValue(User::class.java) ?: throw Exception("Kullanıcı bilgileri bulunamadı")
+                // Çocuk + parent premium ise premium say
+        if (user.userType == UserType.CHILD && user.parentId != null) {
+                    try {
+            val parentId = user.parentId!!
+            val parentSnap = database.reference.child("users").child(parentId).get().await()
+                        val parent = parentSnap.getValue(User::class.java)
+                        if (parent?.isPremium == true) {
+                            user = user.copy(isPremium = true)
+                        }
+                    } catch (_: Exception) { }
+                }
                 
                 // Session kaydet - tüm bilgilerle
-                sessionManager.setLoginSession(user.id, user.email, user.userType.name, user.parentId, user.pairingCode)
+                sessionManager.setLoginSession(user.id, user.email, user.userType.name, user.parentId, user.pairingCode, user.isPremium)
                 
                 Result.success(user)
             } catch (e: Exception) {
@@ -107,11 +119,22 @@ class AuthRepository @Inject constructor(
             if (currentUser != null) {
                 try {
                     val userSnapshot = database.reference.child("users").child(currentUser.uid).get().await()
-                    val user = userSnapshot.getValue(User::class.java)
+                    var user = userSnapshot.getValue(User::class.java)
+                    // Çocuk + parent premium ise premium say
+            if (user != null && user.userType == UserType.CHILD && user.parentId != null) {
+                        try {
+                val parentId = user.parentId!!
+                val parentSnap = database.reference.child("users").child(parentId).get().await()
+                            val parent = parentSnap.getValue(User::class.java)
+                            if (parent?.isPremium == true) {
+                                user = user.copy(isPremium = true)
+                            }
+                        } catch (_: Exception) { }
+                    }
                     
                     // Firebase'den veri gelirse session'ı güncelle - tüm bilgilerle
                     user?.let {
-                        sessionManager.setLoginSession(it.id, it.email, it.userType.name, it.parentId, it.pairingCode)
+                        sessionManager.setLoginSession(it.id, it.email, it.userType.name, it.parentId, it.pairingCode, it.isPremium)
                     }
                     return user
                 } catch (e: Exception) {
@@ -133,7 +156,8 @@ class AuthRepository @Inject constructor(
         val email = sessionManager.getUserEmail()
         val userTypeString = sessionManager.getUserType()
         val parentId = sessionManager.getParentId()
-        val pairingCode = sessionManager.getPairingCode()
+    val pairingCode = sessionManager.getPairingCode()
+    val isPremium = sessionManager.isPremium()
         
         return if (userId != null && email != null && userTypeString != null) {
             try {
@@ -143,7 +167,8 @@ class AuthRepository @Inject constructor(
                     email = email,
                     userType = userType,
                     parentId = parentId,
-                    pairingCode = pairingCode
+            pairingCode = pairingCode,
+            isPremium = isPremium
                 )
             } catch (e: Exception) {
                 null
@@ -171,11 +196,14 @@ class AuthRepository @Inject constructor(
                 id = currentUser.uid,
                 email = currentUser.email ?: "",
                 userType = UserType.CHILD,
-                parentId = parent.id
+                parentId = parent.id,
+                isPremium = parent.isPremium // Çocuk hesabı ebeveyn premiumdur ise premium avantajlarından yararlanır
             )
             
             // Kendi kullanıcı belgesini güncelle
             database.reference.child("users").child(currentUser.uid).setValue(updatedChild).await()
+            // Session'ı da güncelle
+            sessionManager.setLoginSession(updatedChild.id, updatedChild.email, updatedChild.userType.name, updatedChild.parentId, null, updatedChild.isPremium)
             
             Result.success(updatedChild)
         } catch (e: Exception) {
@@ -218,5 +246,25 @@ class AuthRepository @Inject constructor(
     
     private fun generatePairingCode(): String {
         return (100000..999999).random().toString()
+    }
+
+    suspend fun setPremiumForCurrentUser(enabled: Boolean): Result<User> {
+        return try {
+            val current = auth.currentUser ?: return Result.failure(Exception("Giriş yapılmamış"))
+            val snapshot = database.reference.child("users").child(current.uid).get().await()
+            var user = snapshot.getValue(User::class.java) ?: return Result.failure(Exception("Kullanıcı bulunamadı"))
+
+            // Eğer ebeveyn premium yapılıyorsa, sadece ebeveynde flag set edilir.
+            // Çocuk için premium ebeveyn üzerinden türetilmeye devam eder (getCurrentUser/signIn).
+            val updated = user.copy(isPremium = enabled)
+            database.reference.child("users").child(user.id).setValue(updated).await()
+
+            // Session'ı güncelle
+            sessionManager.setLoginSession(updated.id, updated.email, updated.userType.name, updated.parentId, updated.pairingCode, updated.isPremium)
+
+            Result.success(updated)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

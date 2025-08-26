@@ -185,4 +185,19 @@ class AuthViewModel @Inject constructor(
         data class Success(val user: User) : PairingState()
         data class Error(val message: String) : PairingState()
     }
+
+    fun setPremiumForCurrentUser(enabled: Boolean) {
+        viewModelScope.launch {
+            val result = authRepository.setPremiumForCurrentUser(enabled)
+            result.fold(
+                onSuccess = { user ->
+                    _currentUser.value = user
+                    _authState.value = AuthState.Success(user)
+                },
+                onFailure = { ex ->
+                    _authState.value = AuthState.Error(ex.message ?: "Premium güncellenemedi")
+                }
+            )
+        }
+    }
 }

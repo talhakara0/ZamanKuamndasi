@@ -186,12 +186,22 @@ class AppSettingsFragment : Fragment() {
         
         appUsageViewModel.error.observe(viewLifecycleOwner) { error ->
             error?.let {
-                // Hata veya başarı mesajını göster
-                AlertDialog.Builder(requireContext())
-                    .setTitle(if (it.contains("başarıyla")) "Başarılı" else "Hata")
-                    .setMessage(it)
-                    .setPositiveButton("Tamam", null)
-                    .show()
+                val isSuccess = it.contains("başarıyla")
+                if (!isSuccess && it.contains("en fazla 3 uygulamaya")) {
+                    // Premium tanıtımı
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("Premium gerekli")
+                        .setMessage("Daha fazla uygulama için Premium'a geçin. Premium hesaplarda reklam yoktur ve sınırsız uygulama limiti koyabilirsiniz.")
+                        .setPositiveButton("Tamam", null)
+                        .show()
+                } else {
+                    // Hata veya başarı mesajını göster
+                    AlertDialog.Builder(requireContext())
+                        .setTitle(if (isSuccess) "Başarılı" else "Hata")
+                        .setMessage(it)
+                        .setPositiveButton("Tamam", null)
+                        .show()
+                }
             }
         }
     }
