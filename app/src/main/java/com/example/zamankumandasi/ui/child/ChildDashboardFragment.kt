@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.zamankumandasi.R
 import com.example.zamankumandasi.data.model.AppUsage
 import com.example.zamankumandasi.databinding.FragmentChildDashboardBinding
+import com.example.zamankumandasi.ads.AdManager
 import com.example.zamankumandasi.service.AppUsageService
 import com.example.zamankumandasi.ui.UsageAccessActivity
 import com.example.zamankumandasi.ui.adapter.AppUsageAdapter
@@ -93,6 +94,8 @@ class ChildDashboardFragment : Fragment() {
         
         // Refresh butonu
         binding.btnRefresh.setOnClickListener {
+            // Yenile butonuna basılınca arada reklam göster (frekans limiti geçerliyse)
+            AdManager.maybeShowInterstitial(requireActivity())
             checkAndLoadUsageData()
         }
 

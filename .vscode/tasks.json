@@ -1,0 +1,77 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Gradle sync/build with ads",
+			"type": "shell",
+			"command": "./gradlew.bat assembleDebug",
+			"problemMatcher": [
+				"$gradle-build"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Gradle assembleDebug (retry)",
+			"type": "shell",
+			"command": "./gradlew.bat assembleDebug --no-daemon",
+			"problemMatcher": [
+				"$gradle-build"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Gradle assembleDebug (retry 2)",
+			"type": "shell",
+			"command": "./gradlew.bat assembleDebug --no-daemon",
+			"problemMatcher": [
+				"$gradle-build"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Gradle clean assembleDebug",
+			"type": "shell",
+			"command": "./gradlew.bat clean assembleDebug --no-daemon",
+			"problemMatcher": [
+				"$gradle-build"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Gradle assembleDebug after interstitial import fix",
+			"type": "shell",
+			"command": "./gradlew.bat assembleDebug --no-daemon",
+			"problemMatcher": [
+				"$gradle-build"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Gradle clean assembleDebug (after manifest fix)",
+			"type": "shell",
+			"command": "./gradlew.bat clean assembleDebug --no-daemon",
+			"problemMatcher": [
+				"$gradle-build"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Gradle assembleDebug after property replace",
+			"type": "shell",
+			"command": "./gradlew.bat assembleDebug --no-daemon",
+			"problemMatcher": [
+				"$gradle-build"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Gradle clean assembleDebug after BoM bump",
+			"type": "shell",
+			"command": "./gradlew.bat clean assembleDebug --no-daemon",
+			"problemMatcher": [
+				"$gradle-build"
+			],
+			"group": "build"
+		}
+	]
+}

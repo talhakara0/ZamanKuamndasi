@@ -1,6 +1,8 @@
 package com.example.zamankumandasi.ui
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -9,6 +11,7 @@ import com.example.zamankumandasi.R
 import com.example.zamankumandasi.data.model.UserType
 import com.example.zamankumandasi.ui.viewmodel.AuthViewModel
 import androidx.navigation.fragment.NavHostFragment
+import com.example.zamankumandasi.ads.AdManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -16,6 +19,9 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
     
     private val authViewModel: AuthViewModel by viewModels()
+    private val adHandler = Handler(Looper.getMainLooper())
+    private var inScreenAdRunnable: Runnable? = null
+    private val UI_STAY_DELAY_MS = 45_000L // 45 saniye ekranda kalınca bir kez dene
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +43,8 @@ class MainActivity : AppCompatActivity() {
                 is AuthViewModel.AuthState.Success -> {
                     // Başarılı giriş sonrası flag'i resetle
                     isLoggedOut = false
+                    // Başarılı girişten sonra arada bir reklam göster
+                    AdManager.maybeShowInterstitial(this)
                 }
                 else -> { /* Diğer durumlar */ }
             }
@@ -51,12 +59,15 @@ class MainActivity : AppCompatActivity() {
                     when (user.userType) {
                         UserType.PARENT -> {
                             navController.navigate(R.id.action_loginFragment_to_parentDashboardFragment)
+                            AdManager.maybeShowInterstitial(this)
                         }
                         UserType.CHILD -> {
                             if (user.parentId == null) {
                                 navController.navigate(R.id.action_loginFragment_to_pairingFragment)
+                                AdManager.maybeShowInterstitial(this)
                             } else {
                                 navController.navigate(R.id.action_loginFragment_to_childDashboardFragment)
+                                AdManager.maybeShowInterstitial(this)
                             }
                         }
                     }
@@ -69,6 +80,30 @@ class MainActivity : AppCompatActivity() {
                 android.util.Log.d("talha", "Logout yapıldı - otomatik yönlendirme engellendi")
             }
         }
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        scheduleInScreenAd()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        cancelInScreenAd()
+    }
+
+    private fun scheduleInScreenAd() {
+        cancelInScreenAd()
+        inScreenAdRunnable = Runnable {
+            // Ekranda bir süre kalındı; arada bir reklam göstermeyi dene
+            AdManager.maybeShowInterstitial(this)
+        }
+        adHandler.postDelayed(inScreenAdRunnable!!, UI_STAY_DELAY_MS)
+    }
+
+    private fun cancelInScreenAd() {
+        inScreenAdRunnable?.let { adHandler.removeCallbacks(it) }
+        inScreenAdRunnable = null
     }
     
     override fun onSupportNavigateUp(): Boolean {

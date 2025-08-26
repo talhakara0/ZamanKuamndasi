@@ -23,6 +23,11 @@
         android:theme="@style/Theme.ZamanKumandasi"
         tools:targetApi="31">
         
+        <!-- AdMob App ID (test ID). Replace with your real app ID in production) -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+        
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
@@ -53,6 +58,12 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
+
+        <!-- Resolve AD_SERVICES_CONFIG manifest merge conflict between Ads and Firebase Measurement -->
+        <property
+            android:name="android.adservices.AD_SERVICES_CONFIG"
+            android:resource="@xml/gma_ad_services_config"
+            tools:replace="android:resource" />
 
     </application>
 
