@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Bu drawable strikethrough efekti için kullanılacak, 
+         gerçek strikethrough efekti TextView'da paint flags ile yapılmalı -->
+    <solid android:color="@android:color/transparent" />
+</shape>

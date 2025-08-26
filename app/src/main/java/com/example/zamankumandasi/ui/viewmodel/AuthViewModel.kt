@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.zamankumandasi.billing.BillingManager
 import com.example.zamankumandasi.data.model.User
 import com.example.zamankumandasi.data.model.UserType
 import com.example.zamankumandasi.data.repository.AuthRepository
@@ -13,7 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val billingManager: BillingManager
 ) : ViewModel() {
 
     private val _authState = MutableLiveData<AuthState>()
@@ -198,6 +200,18 @@ class AuthViewModel @Inject constructor(
                     _authState.value = AuthState.Error(ex.message ?: "Premium güncellenemedi")
                 }
             )
+        }
+    }
+    
+    fun updatePremiumFromBilling() {
+        viewModelScope.launch {
+            val isPremiumPurchased = billingManager.isPremiumPurchased()
+            val currentUser = _currentUser.value
+            
+            // Eğer satın alma durumu ile kullanıcı durumu farklıysa güncelle
+            if (currentUser != null && currentUser.isPremium != isPremiumPurchased) {
+                setPremiumForCurrentUser(isPremiumPurchased)
+            }
         }
     }
 }

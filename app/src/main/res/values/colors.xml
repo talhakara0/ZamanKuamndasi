@@ -2,4 +2,48 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Theme Colors -->
+    <color name="primary">#1976D2</color>
+    <color name="primary_dark">#1565C0</color>
+    <color name="primary_light">#42A5F5</color>
+    <color name="accent">#FF5722</color>
+    
+    <!-- Text Colors -->
+    <color name="primary_text">#212121</color>
+    <color name="secondary_text">#757575</color>
+    <color name="hint_text">#BDBDBD</color>
+    
+    <!-- Background Colors -->
+    <color name="background">#F5F5F5</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="card_stroke">#E0E0E0</color>
+    
+    <!-- Purchase Related Colors -->
+    <color name="popular_bg">#FF5722</color>
+    <color name="period_bg">#4CAF50</color>
+    <color name="features_bg">#F8F9FA</color>
+    <color name="features_border">#E9ECEF</color>
+    
+    <!-- Product Type Colors -->
+    <color name="monthly_bg">#2196F3</color>
+    <color name="yearly_bg">#4CAF50</color>
+    <color name="lifetime_bg">#FF9800</color>
+    
+    <!-- Status Colors -->
+    <color name="success">#4CAF50</color>
+    <color name="success_bg">#E8F5E8</color>
+    <color name="success_text">#2E7D32</color>
+    
+    <color name="warning">#FF9800</color>
+    <color name="warning_bg">#FFF3E0</color>
+    <color name="warning_text">#E65100</color>
+    
+    <color name="error">#F44336</color>
+    <color name="error_bg">#FFEBEE</color>
+    <color name="error_text">#C62828</color>
+    
+    <color name="info">#2196F3</color>
+    <color name="info_bg">#E3F2FD</color>
+    <color name="info_text">#1565C0</color>
 </resources>

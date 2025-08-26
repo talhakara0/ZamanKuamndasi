@@ -91,6 +91,10 @@
         <action
             android:id="@+id/action_parentDashboardFragment_to_childUsageDetailFragment"
             app:destination="@id/childUsageDetailFragment" />
+            
+        <action
+            android:id="@+id/action_parentDashboardFragment_to_purchaseFragment"
+            app:destination="@id/purchaseFragment" />
     </fragment>
 
     <fragment
@@ -108,6 +112,10 @@
         <action
             android:id="@+id/action_childDashboardFragment_to_pairingFragment"
             app:destination="@id/pairingFragment" />
+            
+        <action
+            android:id="@+id/action_childDashboardFragment_to_purchaseFragment"
+            app:destination="@id/purchaseFragment" />
     </fragment>
 
     <fragment
@@ -115,5 +123,11 @@
         android:name="com.example.zamankumandasi.ui.parent.AppSettingsFragment"
         android:label="Uygulama Ayarları"
         tools:layout="@layout/fragment_app_settings" />
+
+    <fragment
+        android:id="@+id/purchaseFragment"
+        android:name="com.example.zamankumandasi.ui.purchase.PurchaseFragment"
+        android:label="Premium'a Geç"
+        tools:layout="@layout/fragment_purchase" />
 
 </navigation>

@@ -78,6 +78,10 @@ class ParentDashboardFragment : Fragment() {
         binding.btnViewUsage.setOnClickListener {
             // TODO: Kullanım raporları ekranına git
         }
+        
+        binding.btnPremium.setOnClickListener {
+            findNavController().navigate(R.id.action_parentDashboardFragment_to_purchaseFragment)
+        }
     }
 
     private fun setupRecyclerView() {

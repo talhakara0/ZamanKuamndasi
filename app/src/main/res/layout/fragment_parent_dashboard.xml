@@ -103,6 +103,17 @@
                         android:layout_marginTop="8dp"
                         android:text="Kullanım Raporları"
                         app:icon="@drawable/ic_launcher_foreground" />
+                        
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPremium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Premium'a Geç"
+                        android:textColor="@color/white"
+                        app:backgroundTint="@color/accent"
+                        app:icon="@drawable/ic_premium_crown"
+                        app:iconTint="@color/white" />
 
                 </LinearLayout>
 

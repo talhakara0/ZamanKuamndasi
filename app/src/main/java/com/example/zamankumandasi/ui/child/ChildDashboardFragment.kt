@@ -105,6 +105,11 @@ class ChildDashboardFragment : Fragment() {
 
         // Eşleşme butonu - listener'ı observeCurrentUser'da ayarlayacağız
         // binding.btnPairNow.setOnClickListener artık burada yok
+        
+        // Premium butonu
+        binding.btnPremium.setOnClickListener {
+            findNavController().navigate(R.id.action_childDashboardFragment_to_purchaseFragment)
+        }
     }
     
     private fun checkNetworkStatus() {
