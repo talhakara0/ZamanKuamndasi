@@ -12,8 +12,8 @@ import com.google.android.gms.ads.MobileAds
 
 object AdManager {
     private const val TAG = "AdManager"
-    // Google test interstitial ad unit ID. Replace with your own in prod.
-    private const val TEST_INTERSTITIAL_ID = "ca-app-pub-3940256099942544/1033173712"
+    // Gerçek interstitial reklam ID'si
+    private const val INTERSTITIAL_ID = "ca-app-pub-2463753967736908/7616840291"
 
     private var interstitialAd: InterstitialAd? = null
     private var lastShownAtMs: Long = 0
@@ -51,7 +51,7 @@ object AdManager {
         val request = AdRequest.Builder().build()
         InterstitialAd.load(
             context,
-            TEST_INTERSTITIAL_ID,
+            INTERSTITIAL_ID,
             request,
             object : InterstitialAdLoadCallback() {
                 override fun onAdLoaded(ad: InterstitialAd) {
