@@ -47,39 +47,29 @@ class AuthRepository @Inject constructor(
             if (localUser != null && localUser.email == email) {
                 return Result.success(localUser)
             }
-            
+
             // Firebase ile giriş yapmaya çalış
-            try {
-                val result = auth.signInWithEmailAndPassword(email, password).await()
-                val userId = result.user?.uid ?: throw Exception("Kullanıcı bulunamadı")
-                
-                val userSnapshot = database.reference.child("users").child(userId).get().await()
-                var user = userSnapshot.getValue(User::class.java) ?: throw Exception("Kullanıcı bilgileri bulunamadı")
-                // Çocuk + parent premium ise premium say
-        if (user.userType == UserType.CHILD && user.parentId != null) {
-                    try {
-            val parentId = user.parentId!!
-            val parentSnap = database.reference.child("users").child(parentId).get().await()
-                        val parent = parentSnap.getValue(User::class.java)
-                        if (parent?.isPremium == true) {
-                            user = user.copy(isPremium = true)
-                        }
-                    } catch (_: Exception) { }
-                }
-                
-                // Session kaydet - tüm bilgilerle
-                sessionManager.setLoginSession(user.id, user.email, user.userType.name, user.parentId, user.pairingCode, user.isPremium)
-                
-                Result.success(user)
-            } catch (e: Exception) {
-                // İnternet yoksa veya Firebase hatası varsa, local session kontrol et
-                val cachedUser = createUserFromSession()
-                if (cachedUser != null && cachedUser.email == email) {
-                    Result.success(cachedUser)
-                } else {
-                    Result.failure(Exception("İnternet bağlantısı yok ve local session bulunamadı: ${e.message}"))
-                }
+            val result = auth.signInWithEmailAndPassword(email, password).await()
+            val userId = result.user?.uid ?: throw Exception("Kullanıcı bulunamadı")
+
+            val userSnapshot = database.reference.child("users").child(userId).get().await()
+            var user = userSnapshot.getValue(User::class.java) ?: throw Exception("Kullanıcı bilgileri bulunamadı")
+            // Çocuk + parent premium ise premium say
+            if (user.userType == UserType.CHILD && user.parentId != null) {
+                try {
+                    val parentId = user.parentId!!
+                    val parentSnap = database.reference.child("users").child(parentId).get().await()
+                    val parent = parentSnap.getValue(User::class.java)
+                    if (parent?.isPremium == true) {
+                        user = user.copy(isPremium = true)
+                    }
+                } catch (_: Exception) { }
             }
+
+            // Session kaydet - tüm bilgilerle
+            sessionManager.setLoginSession(user.id, user.email, user.userType.name, user.parentId, user.pairingCode, user.isPremium)
+
+            Result.success(user)
         } catch (e: Exception) {
             Result.failure(e)
         }

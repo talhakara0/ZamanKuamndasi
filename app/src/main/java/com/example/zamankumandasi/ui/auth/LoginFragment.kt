@@ -94,23 +94,32 @@ class LoginFragment : Fragment() {
                     binding.progressBar.visibility = View.VISIBLE
                     binding.btnLogin.isEnabled = false
                 }
-                
+
                 is AuthViewModel.AuthState.Success -> {
                     binding.progressBar.visibility = View.GONE
                     binding.btnLogin.isEnabled = true
-                    
+
                     // Sadece LoginFragment'tayken navigate et
                     if (findNavController().currentDestination?.id == R.id.loginFragment) {
                         navigateBasedOnUserType(state.user)
                     }
                 }
-                
+
                 is AuthViewModel.AuthState.Error -> {
                     binding.progressBar.visibility = View.GONE
                     binding.btnLogin.isEnabled = true
-                    Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+                    val errorMsg = when {
+                        state.message?.contains("auth credential is incorrect", true) == true ->
+                            "E-posta veya şifre hatalı, lütfen tekrar deneyin."
+                        state.message?.contains("malformed", true) == true ->
+                            "Kimlik bilgileri hatalı veya süresi dolmuş."
+                        state.message?.contains("expired", true) == true ->
+                            "Kimlik doğrulama süresi dolmuş."
+                        else -> state.message
+                    }
+                    Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
                 }
-                
+
                 is AuthViewModel.AuthState.SignedOut -> {
                     binding.progressBar.visibility = View.GONE
                     binding.btnLogin.isEnabled = true
