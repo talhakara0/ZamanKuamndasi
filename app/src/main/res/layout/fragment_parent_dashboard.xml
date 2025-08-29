@@ -93,7 +93,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:text="Uygulama Ayarları"
-                        app:icon="@drawable/ic_launcher_foreground" />
+                        app:icon="@drawable/ic_info" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnViewUsage"
@@ -102,7 +102,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="Kullanım Raporları"
-                        app:icon="@drawable/ic_launcher_foreground" />
+                        app:icon="@drawable/ic_check_circle" />
                         
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnPremium"
