@@ -91,9 +91,9 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
+            android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
-            android:layout_marginEnd="12dp"
+            android:layout_marginEnd="8dp"
             android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/ivChildIcon"
@@ -103,10 +103,15 @@
                 android:id="@+id/btnManageApps"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="4dp"
                 android:layout_weight="1"
                 android:text="Uygulamalar"
-                android:textSize="12sp" />
+                android:textSize="11sp"
+                android:minHeight="40dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp" />
 
             <Button
                 android:id="@+id/btnViewUsage"
@@ -114,7 +119,12 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Kullanım"
-                android:textSize="12sp" />
+                android:textSize="11sp"
+                android:minHeight="40dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp" />
 
         </LinearLayout>
 
