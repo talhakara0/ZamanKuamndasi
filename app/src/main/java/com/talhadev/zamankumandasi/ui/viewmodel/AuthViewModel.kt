@@ -214,4 +214,23 @@ class AuthViewModel @Inject constructor(
             }
         }
     }
+
+    fun updateChildName(childId: String, newName: String) {
+        viewModelScope.launch {
+            val currentUser = _currentUser.value
+            if (currentUser?.userType == UserType.PARENT) {
+                val result = authRepository.updateChildName(childId, newName, currentUser.id)
+                result.fold(
+                    onSuccess = {
+                        // Çocuk listesini yeniden yükle
+                        loadChildren(currentUser.id)
+                    },
+                    onFailure = { exception ->
+                        // Hata durumunda AuthState'i güncelle
+                        _authState.value = AuthState.Error(exception.message ?: "Çocuk ismi güncellenemedi")
+                    }
+                )
+            }
+        }
+    }
 }

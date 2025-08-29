@@ -103,6 +103,9 @@ class ParentDashboardFragment : Fragment() {
             },
             onViewUsageClick = { child ->
                 // Çocuğun kullanım verilerini görüntüle
+            },
+            onEditNameClick = { child ->
+                showEditChildNameDialog(child)
             }
         )
 
@@ -144,6 +147,60 @@ class ParentDashboardFragment : Fragment() {
                 binding.tvNoChildren.visibility = View.VISIBLE
             }
         }
+    }
+
+    private fun showEditChildNameDialog(child: com.talhadev.zamankumandasi.data.model.User) {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(
+            com.talhadev.zamankumandasi.R.layout.dialog_edit_child_name, null
+        )
+        val etChildName = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(
+            com.talhadev.zamankumandasi.R.id.etChildName
+        )
+        
+        // Mevcut ismi set et
+        etChildName.setText(child.name)
+        
+        // Emülatörde Türkçe karakter desteği için input type'ı ayarla
+        etChildName.inputType = android.text.InputType.TYPE_CLASS_TEXT or 
+                               android.text.InputType.TYPE_TEXT_VARIATION_PERSON_NAME or
+                               android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS
+        
+        // Emülatörde Türkçe karakter desteği için ek ayarlar
+        etChildName.isLongClickable = false
+        etChildName.setTextIsSelectable(true)
+        
+        val alertDialog = android.app.AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .setPositiveButton("Kaydet") { dialog, _ ->
+                val newName = etChildName.text.toString().trim()
+                if (newName.isNotEmpty()) {
+                    // Türkçe karakterleri koru ve ilk harfi büyük yap
+                    val formattedName = newName.replaceFirstChar { 
+                        if (it.isLowerCase()) it.uppercase() else it.toString() 
+                    }
+                    
+                    // Sadece harf ve boşluk karakterlerine izin ver (Türkçe karakterler dahil)
+                    val cleanName = formattedName.replace(Regex("[^a-zA-ZçğıöşüÇĞIİÖŞÜ ]"), "")
+                        .replace(Regex("\\s+"), " ") // Birden fazla boşluğu tek boşluğa çevir
+                        .trim()
+                    
+                    if (cleanName.isNotEmpty()) {
+                        authViewModel.updateChildName(child.id, cleanName)
+                        dialog.dismiss()
+                        Toast.makeText(requireContext(), "Çocuk ismi güncellendi: $cleanName", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(requireContext(), "Geçerli bir isim giriniz", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(requireContext(), "İsim boş olamaz", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("İptal") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .create()
+        
+        alertDialog.show()
     }
 
     // Eski deprecated menü fonksiyonları kaldırıldı - modern MenuProvider kullanılıyor

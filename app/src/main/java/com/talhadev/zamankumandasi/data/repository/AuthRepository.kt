@@ -185,6 +185,7 @@ class AuthRepository @Inject constructor(
             val updatedChild = User(
                 id = currentUser.uid,
                 email = currentUser.email ?: "",
+                name = "", // Başlangıçta boş, ebeveyn sonra değiştirebilir
                 userType = UserType.CHILD,
                 parentId = parent.id,
                 isPremium = parent.isPremium // Çocuk hesabı ebeveyn premiumdur ise premium avantajlarından yararlanır
@@ -254,6 +255,33 @@ class AuthRepository @Inject constructor(
 
             Result.success(updated)
         } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateChildName(childId: String, newName: String, parentId: String): Result<Unit> {
+        return try {
+            // Ebeveyn kontrolü - sadece doğru ebeveyn isim değiştirebilir
+            val childSnapshot = database.reference.child("users").child(childId).get().await()
+            val child = childSnapshot.getValue(User::class.java)
+            
+            if (child?.parentId != parentId) {
+                return Result.failure(Exception("Bu çocuk hesabına isim değiştirme yetkiniz yok"))
+            }
+
+            // Türkçe karakterleri koruyarak çocuk ismini güncelle
+            val cleanName = newName.trim()
+            if (cleanName.isNotEmpty()) {
+                val updatedChild = child.copy(name = cleanName)
+                database.reference.child("users").child(childId).setValue(updatedChild).await()
+                android.util.Log.d("talha", "Çocuk ismi güncellendi: $cleanName (ID: $childId)")
+            } else {
+                return Result.failure(Exception("İsim boş olamaz"))
+            }
+            
+            Result.success(Unit)
+        } catch (e: Exception) {
+            android.util.Log.e("talha", "updateChildName error: ${e.message}")
             Result.failure(e)
         }
     }

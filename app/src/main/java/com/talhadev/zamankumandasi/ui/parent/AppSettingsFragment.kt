@@ -93,7 +93,14 @@ class AppSettingsFragment : Fragment() {
             return
         }
         
-        val childNames = children.map { it.email }.toTypedArray()
+        val childNames = children.map { child ->
+            if (child.name.isNotEmpty()) {
+                // Türkçe karakterleri koruyarak ismi göster
+                child.name
+            } else {
+                child.email
+            }
+        }.toTypedArray()
         val childIds = children.map { it.id }
         
         AlertDialog.Builder(requireContext())
@@ -117,7 +124,15 @@ class AppSettingsFragment : Fragment() {
         val btnSave = dialogView.findViewById<Button>(R.id.btnSave)
         
         val selectedChild = authViewModel.children.value?.find { it.id == childId }
-        tvAppName.text = "$appName için ${selectedChild?.email ?: "Bilinmeyen"} hesabına limit belirleniyor"
+        val childDisplayName = selectedChild?.let { child ->
+            if (child.name.isNotEmpty()) {
+                // Türkçe karakterleri koruyarak ismi göster
+                child.name
+            } else {
+                child.email
+            }
+        } ?: "Bilinmeyen"
+        tvAppName.text = "$appName için $childDisplayName hesabına limit belirleniyor"
         
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogView)

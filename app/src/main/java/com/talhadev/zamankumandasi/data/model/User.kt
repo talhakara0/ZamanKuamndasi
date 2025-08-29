@@ -3,6 +3,7 @@ package com.talhadev.zamankumandasi.data.model
 data class User(
     val id: String = "",
     val email: String = "",
+    val name: String = "", // Çocuk hesapları için isim alanı
     val userType: UserType = UserType.CHILD,
     val parentId: String? = null,
     val pairingCode: String? = null,

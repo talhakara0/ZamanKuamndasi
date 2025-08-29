@@ -11,7 +11,8 @@ import com.talhadev.zamankumandasi.databinding.ItemChildBinding
 class ChildrenAdapter(
     private val onChildClick: (User) -> Unit,
     private val onManageAppsClick: (User) -> Unit,
-    private val onViewUsageClick: (User) -> Unit
+    private val onViewUsageClick: (User) -> Unit,
+    private val onEditNameClick: (User) -> Unit
 ) : ListAdapter<User, ChildrenAdapter.ChildViewHolder>(ChildDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChildViewHolder {
@@ -33,6 +34,15 @@ class ChildrenAdapter(
 
         fun bind(child: User) {
             binding.apply {
+                // Çocuk ismini göster, eğer yoksa email'i göster
+                val displayName = if (child.name.isNotEmpty()) {
+                    // Türkçe karakterleri koruyarak ismi göster
+                    child.name
+                } else {
+                    "İsimsiz Çocuk"
+                }
+                tvChildName.text = displayName
+                
                 tvChildEmail.text = child.email
                 tvDeviceId.text = "Cihaz ID: ${child.deviceId ?: "Bilinmiyor"}"
                 
@@ -44,6 +54,11 @@ class ChildrenAdapter(
                     "Bilinmiyor"
                 }
                 tvCreatedAt.text = "Eşleştirildi: $createdAtFormatted"
+                
+                // İsim düzenleme butonu
+                btnEditName.setOnClickListener {
+                    onEditNameClick(child)
+                }
                 
                 btnManageApps.setOnClickListener {
                     onManageAppsClick(child)

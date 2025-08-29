@@ -34,7 +34,10 @@ class ChildUsageDetailFragment : Fragment() {
 
         val childId = arguments?.getString("childId")
         val childEmail = arguments?.getString("childEmail")
-        binding.tvChildEmail.text = childEmail ?: "Çocuk"
+        
+        // Çocuk ismini göster, eğer yoksa email'i göster
+        val displayName = if (childEmail?.isNotEmpty() == true) childEmail else "Çocuk"
+        binding.tvChildEmail.text = displayName
 
         appUsageAdapter = AppUsageAdapter(onAppClick = {})
         binding.rvChildAppUsage.apply {

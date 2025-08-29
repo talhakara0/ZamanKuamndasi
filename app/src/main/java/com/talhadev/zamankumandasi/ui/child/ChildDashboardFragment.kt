@@ -65,7 +65,7 @@ class ChildDashboardFragment : Fragment() {
 
         setupViews()
         setupRecyclerView()
-    observeCurrentUser()
+        observeCurrentUser()
         observeAuthState()
         observeAppUsage()
 
@@ -252,7 +252,14 @@ class ChildDashboardFragment : Fragment() {
             user?.let {
                 // Reklam premium durumu
                 AdManager.setPremium(it.isPremium)
-                binding.tvUserEmail.text = it.email
+                // Çocuk ismini göster, eğer yoksa email'i göster
+                val displayName = if (it.name.isNotEmpty()) {
+                    // Türkçe karakterleri koruyarak ismi göster
+                    it.name
+                } else {
+                    "İsimsiz Çocuk"
+                }
+                binding.tvUserEmail.text = displayName
                 
                 // Ebeveyn eşleşme durumunu kontrol et
                 if (it.parentId == null) {
