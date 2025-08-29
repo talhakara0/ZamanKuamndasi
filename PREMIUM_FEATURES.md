@@ -3,9 +3,8 @@
 ## Özellikler
 
 ### ✨ Premium Paketler
-- **Aylık Premium**: ₺29,99 - Aylık erişim
-- **Yıllık Premium**: ₺89,99 - %60 tasarruf
-- **Yaşam Boyu Premium**: ₺249,99 - Tek seferlik ödeme
+- **Aylık Premium**: ₺99 - Aylık erişim
+- **Yıllık Premium**: ₺899 - %60 tasarruf
 
 ### 🎯 Premium Avantajları
 - ✅ Reklamların tamamen kaldırılması

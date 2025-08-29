@@ -14,8 +14,7 @@ data class PurchaseProduct(
 
 enum class ProductType {
     PREMIUM_MONTHLY,
-    PREMIUM_YEARLY,
-    PREMIUM_LIFETIME
+    PREMIUM_YEARLY
 }
 
 data class PurchaseState(

@@ -59,10 +59,6 @@ class PurchaseProductAdapter(
                         tvProductPeriod.text = "Yıllık - %60 Tasarruf"
                         tvProductPeriod.setBackgroundColor(ContextCompat.getColor(root.context, R.color.yearly_bg))
                     }
-                    ProductType.PREMIUM_LIFETIME -> {
-                        tvProductPeriod.text = "Yaşam Boyu"
-                        tvProductPeriod.setBackgroundColor(ContextCompat.getColor(root.context, R.color.lifetime_bg))
-                    }
                 }
 
                 // Özellikler listesi

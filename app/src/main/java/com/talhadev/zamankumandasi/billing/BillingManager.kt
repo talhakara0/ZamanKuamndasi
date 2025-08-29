@@ -23,7 +23,6 @@ class BillingManager @Inject constructor(
         // Test product IDs - Production'da gerçek product ID'lerle değiştirin
         const val PREMIUM_MONTHLY = "premium_monthly"
         const val PREMIUM_YEARLY = "premium_yearly" 
-        const val PREMIUM_LIFETIME = "premium_lifetime"
     }
 
     private var billingClient: BillingClient? = null
@@ -50,7 +49,7 @@ class BillingManager @Inject constructor(
                 id = PREMIUM_MONTHLY,
                 title = "Premium Aylık",
                 description = "Aylık premium üyelik",
-                price = "₺29,99",
+                price = "₺99",
                 features = listOf(
                     "Reklamların kaldırılması",
                     "Sınırsız çocuk hesabı",
@@ -62,8 +61,8 @@ class BillingManager @Inject constructor(
                 id = PREMIUM_YEARLY,
                 title = "Premium Yıllık",
                 description = "Yıllık premium üyelik - %60 tasarruf",
-                price = "₺89,99",
-                originalPrice = "₺359,88",
+                price = "₺899",
+                originalPrice = "₺1.188",
                 discount = "%60 İndirim",
                 features = listOf(
                     "Reklamların kaldırılması",
@@ -73,20 +72,6 @@ class BillingManager @Inject constructor(
                 ),
                 isPopular = true,
                 productType = ProductType.PREMIUM_YEARLY
-            ),
-            PurchaseProduct(
-                id = PREMIUM_LIFETIME,
-                title = "Premium Yaşam Boyu",
-                description = "Tek seferlik ödeme ile yaşam boyu erişim",
-                price = "₺249,99",
-                features = listOf(
-                    "Reklamların kaldırılması",
-                    "Sınırsız çocuk hesabı",
-                    "Gelişmiş uygulama kontrolü",
-                    "Tek seferlik ödeme",
-                    "Yaşam boyu erişim"
-                ),
-                productType = ProductType.PREMIUM_LIFETIME
             )
         )
         
@@ -135,10 +120,6 @@ class BillingManager @Inject constructor(
             QueryProductDetailsParams.Product.newBuilder()
                 .setProductId(PREMIUM_YEARLY)
                 .setProductType(BillingClient.ProductType.INAPP)
-                .build(),
-            QueryProductDetailsParams.Product.newBuilder()
-                .setProductId(PREMIUM_LIFETIME)
-                .setProductType(BillingClient.ProductType.INAPP)
                 .build()
         )
 
@@ -173,20 +154,12 @@ class BillingManager @Inject constructor(
                 "Gelişmiş uygulama kontrolü",
                 "12 ay için %60 tasarruf"
             )
-            PREMIUM_LIFETIME -> listOf(
-                "Reklamların kaldırılması",
-                "Sınırsız çocuk hesabı",
-                "Gelişmiş uygulama kontrolü",
-                "Tek seferlik ödeme",
-                "Yaşam boyu erişim"
-            )
             else -> listOf()
         }
 
         val productType = when (productDetails.productId) {
             PREMIUM_MONTHLY -> ProductType.PREMIUM_MONTHLY
             PREMIUM_YEARLY -> ProductType.PREMIUM_YEARLY
-            PREMIUM_LIFETIME -> ProductType.PREMIUM_LIFETIME
             else -> ProductType.PREMIUM_MONTHLY
         }
 
@@ -287,8 +260,7 @@ class BillingManager @Inject constructor(
         return _purchases.value.any { purchase ->
             purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
             (purchase.products.contains(PREMIUM_MONTHLY) || 
-             purchase.products.contains(PREMIUM_YEARLY) ||
-             purchase.products.contains(PREMIUM_LIFETIME))
+             purchase.products.contains(PREMIUM_YEARLY))
         }
     }
 
@@ -296,8 +268,7 @@ class BillingManager @Inject constructor(
         return _purchases.value.find { purchase ->
             purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
             (purchase.products.contains(PREMIUM_MONTHLY) || 
-             purchase.products.contains(PREMIUM_YEARLY) ||
-             purchase.products.contains(PREMIUM_LIFETIME))
+             purchase.products.contains(PREMIUM_YEARLY))
         }
     }
 

@@ -6,18 +6,13 @@ Bu uygulamada kullanılan product ID'ler Google Play Console'da tanımlanmalıd�
 
 ### 1. Premium Aylık (`premium_monthly`)
 - **Tür**: Managed Product (Tüketilemez)
-- **Fiyat**: ₺29,99
+- **Fiyat**: ₺99
 - **Açıklama**: "Aylık premium üyelik - reklamları kaldırır ve tüm özelliklere erişim sağlar"
 
 ### 2. Premium Yıllık (`premium_yearly`) 
 - **Tür**: Managed Product (Tüketilemez)
-- **Fiyat**: ₺89,99 (Aylık plana göre %60 tasarruf)
+- **Fiyat**: ₺899 (Aylık plana göre %60 tasarruf)
 - **Açıklama**: "Yıllık premium üyelik - reklamları kaldırır ve tüm özelliklere erişim sağlar"
-
-### 3. Premium Yaşam Boyu (`premium_lifetime`)
-- **Tür**: Managed Product (Tüketilemez) 
-- **Fiyat**: ₺249,99
-- **Açıklama**: "Yaşam boyu premium erişim - reklamları kaldırır ve tüm özelliklere erişim sağlar"
 
 ## Google Play Console Kurulum Adımları
 
@@ -26,7 +21,7 @@ Bu uygulamada kullanılan product ID'ler Google Play Console'da tanımlanmalıd�
 3. **Kazanç > In-app products** sekmesine gidin
 4. **Ürün oluştur** butonuna tıklayın
 5. Her bir product ID için:
-   - Product ID'yi girin (premium_monthly, premium_yearly, premium_lifetime)
+   - Product ID'yi girin (premium_monthly, premium_yearly)
    - Ürün adını ve açıklamasını girin
    - Fiyatı belirleyin
    - **Aktif** olarak ayarlayın
