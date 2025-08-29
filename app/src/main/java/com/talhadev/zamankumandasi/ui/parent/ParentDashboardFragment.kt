@@ -54,9 +54,8 @@ class ParentDashboardFragment : Fragment() {
                     SimpleLogout.confirmAndSignOut(this, authViewModel)
                     true
                 }
-                R.id.action_toggle_premium -> {
-                    val isPremium = authViewModel.currentUser.value?.isPremium == true
-                    authViewModel.setPremiumForCurrentUser(!isPremium)
+                R.id.action_premium -> {
+                    findNavController().navigate(R.id.action_parentDashboardFragment_to_purchaseFragment)
                     true
                 }
                 else -> false
@@ -77,10 +76,6 @@ class ParentDashboardFragment : Fragment() {
         
         binding.btnViewUsage.setOnClickListener {
             // TODO: Kullanım raporları ekranına git
-        }
-        
-        binding.btnPremium.setOnClickListener {
-            findNavController().navigate(R.id.action_parentDashboardFragment_to_purchaseFragment)
         }
     }
 
@@ -127,9 +122,6 @@ class ParentDashboardFragment : Fragment() {
                 if (it.userType == UserType.PARENT) {
                     authViewModel.loadChildren(it.id)
                 }
-                // Menü başlığını güncelle (dev toggle)
-                val item = binding.toolbar.menu.findItem(R.id.action_toggle_premium)
-                item?.title = if (it.isPremium) "Premium'u kapat (dev)" else "Premium'a geç (dev)"
             }
         }
     }

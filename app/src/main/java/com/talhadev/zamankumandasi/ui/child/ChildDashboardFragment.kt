@@ -91,8 +91,21 @@ class ChildDashboardFragment : Fragment() {
         // Toolbar'ı Activity'ye set et
         (requireActivity() as androidx.appcompat.app.AppCompatActivity).setSupportActionBar(binding.toolbar)
         
-        // Menü zaten layout'ta tanımlanmış, tekrar inflate etmeye gerek yok
-        // binding.toolbar.inflateMenu(R.menu.menu_child_dashboard)
+        // Toolbar menü click listener'ı ekle
+        binding.toolbar.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.action_logout -> {
+                    Log.d("talha", "ChildDashboard: Toolbar çıkış menu item seçildi")
+                    SimpleLogout.confirmAndSignOut(this, authViewModel)
+                    true
+                }
+                R.id.action_premium -> {
+                    findNavController().navigate(R.id.action_childDashboardFragment_to_purchaseFragment)
+                    true
+                }
+                else -> false
+            }
+        }
         
         // Refresh butonu
         binding.btnRefresh.setOnClickListener {
@@ -105,11 +118,6 @@ class ChildDashboardFragment : Fragment() {
 
         // Eşleşme butonu - listener'ı observeCurrentUser'da ayarlayacağız
         // binding.btnPairNow.setOnClickListener artık burada yok
-        
-        // Premium butonu
-        binding.btnPremium.setOnClickListener {
-            findNavController().navigate(R.id.action_childDashboardFragment_to_purchaseFragment)
-        }
     }
     
     private fun checkNetworkStatus() {

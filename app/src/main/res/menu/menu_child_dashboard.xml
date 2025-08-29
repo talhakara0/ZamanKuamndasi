@@ -7,4 +7,9 @@
         android:title="Çıkış Yap"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/action_premium"
+        android:title="Premium'a Geç"
+        app:showAsAction="never" />
+
 </menu>
