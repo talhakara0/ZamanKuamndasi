@@ -9,7 +9,7 @@
         android:id="@+id/ivIcon"
         android:layout_width="72dp"
         android:layout_height="72dp"
-        android:src="@drawable/ic_launcher_foreground"
+        android:src="@mipmap/ic_launcher"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

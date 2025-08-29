@@ -199,7 +199,7 @@ class AppUsageService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Zaman Kumandası")
             .setContentText("Uygulama kullanımı takip ediliyor")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .build()
