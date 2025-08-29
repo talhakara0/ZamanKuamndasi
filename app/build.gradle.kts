@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.zamankumandasi"
+    namespace = "com.talhadev.zamankumandasi"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.zamankumandasi"
+        applicationId = "com.talhadev.zamankumandasi"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

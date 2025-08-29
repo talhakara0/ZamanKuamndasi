@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/loginFragment"
-        android:name="com.example.zamankumandasi.ui.auth.LoginFragment"
+        android:name="com.talhadev.zamankumandasi.ui.auth.LoginFragment"
         android:label="Giriş"
         tools:layout="@layout/fragment_login">
         
@@ -36,7 +36,7 @@
 
     <fragment
         android:id="@+id/registerFragment"
-        android:name="com.example.zamankumandasi.ui.auth.RegisterFragment"
+        android:name="com.talhadev.zamankumandasi.ui.auth.RegisterFragment"
         android:label="Kayıt"
         tools:layout="@layout/fragment_register">
         
@@ -55,7 +55,7 @@
 
     <fragment
         android:id="@+id/pairingFragment"
-        android:name="com.example.zamankumandasi.ui.auth.PairingFragment"
+        android:name="com.talhadev.zamankumandasi.ui.auth.PairingFragment"
         android:label="Eşleştirme"
         tools:layout="@layout/fragment_pairing">
         
@@ -68,13 +68,13 @@
 
     <fragment
         android:id="@+id/childUsageDetailFragment"
-        android:name="com.example.zamankumandasi.ui.parent.ChildUsageDetailFragment"
+        android:name="com.talhadev.zamankumandasi.ui.parent.ChildUsageDetailFragment"
         android:label="Çocuk Kullanım Detayı"
         tools:layout="@layout/fragment_child_usage_detail" />
 
     <fragment
         android:id="@+id/parentDashboardFragment"
-        android:name="com.example.zamankumandasi.ui.parent.ParentDashboardFragment"
+        android:name="com.talhadev.zamankumandasi.ui.parent.ParentDashboardFragment"
         android:label="Ebeveyn Paneli"
         tools:layout="@layout/fragment_parent_dashboard">
         
@@ -99,7 +99,7 @@
 
     <fragment
         android:id="@+id/childDashboardFragment"
-        android:name="com.example.zamankumandasi.ui.child.ChildDashboardFragment"
+        android:name="com.talhadev.zamankumandasi.ui.child.ChildDashboardFragment"
         android:label="Çocuk Paneli"
         tools:layout="@layout/fragment_child_dashboard">
         
@@ -120,13 +120,13 @@
 
     <fragment
         android:id="@+id/appSettingsFragment"
-        android:name="com.example.zamankumandasi.ui.parent.AppSettingsFragment"
+        android:name="com.talhadev.zamankumandasi.ui.parent.AppSettingsFragment"
         android:label="Uygulama Ayarları"
         tools:layout="@layout/fragment_app_settings" />
 
     <fragment
         android:id="@+id/purchaseFragment"
-        android:name="com.example.zamankumandasi.ui.purchase.PurchaseFragment"
+        android:name="com.talhadev.zamankumandasi.ui.purchase.PurchaseFragment"
         android:label="Premium'a Geç"
         tools:layout="@layout/fragment_purchase" />
 

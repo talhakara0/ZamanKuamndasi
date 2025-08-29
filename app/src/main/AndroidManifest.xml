@@ -12,7 +12,7 @@
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
     <application
-        android:name=".ZamanKumandasiApp"
+        android:name="com.talhadev.zamankumandasi.ZamanKumandasiApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -29,7 +29,7 @@
             android:value="ca-app-pub-3940256099942544~3347511713" />
         
         <activity
-            android:name=".ui.MainActivity"
+            android:name="com.talhadev.zamankumandasi.ui.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.ZamanKumandasi">
             <intent-filter>
@@ -40,13 +40,13 @@
 
         <!-- Usage Access izni için activity -->
         <activity
-            android:name=".ui.UsageAccessActivity"
+            android:name="com.talhadev.zamankumandasi.ui.UsageAccessActivity"
             android:exported="false"
             android:theme="@style/Theme.ZamanKumandasi" />
 
         <!-- Bloklama ekranı -->
         <activity
-            android:name=".ui.BlockerActivity"
+            android:name="com.talhadev.zamankumandasi.ui.BlockerActivity"
             android:exported="false"
             android:excludeFromRecents="true"
             android:taskAffinity=""
@@ -54,7 +54,7 @@
 
         <!-- Foreground Service -->
         <service
-            android:name=".service.AppUsageService"
+            android:name="com.talhadev.zamankumandasi.service.AppUsageService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
