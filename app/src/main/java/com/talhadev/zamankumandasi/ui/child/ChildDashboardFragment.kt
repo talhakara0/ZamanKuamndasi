@@ -18,6 +18,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import kotlinx.coroutines.delay
 import com.talhadev.zamankumandasi.R
 import com.talhadev.zamankumandasi.data.model.AppUsage
 import com.talhadev.zamankumandasi.databinding.FragmentChildDashboardBinding
@@ -83,6 +84,8 @@ class ChildDashboardFragment : Fragment() {
             Log.d("talha", "Kullanım izni var, servis başlatılıyor")
             startAppUsageService()
         }
+        
+
     }
 
     
@@ -290,6 +293,13 @@ class ChildDashboardFragment : Fragment() {
                 }
                 
                 appUsageViewModel.loadAppUsageByUser(it.id)
+                
+                // Otomatik olarak kullanım verilerini de topla (limitleri dahil)
+                lifecycleScope.launch {
+                    delay(500) // 500ms bekle (kullanıcı bilgileri yüklensin)
+                    Log.d("talha", "Kullanıcı yüklendi, otomatik kullanım verisi toplanıyor")
+                    checkAndLoadUsageData()
+                }
             }
         }
         
