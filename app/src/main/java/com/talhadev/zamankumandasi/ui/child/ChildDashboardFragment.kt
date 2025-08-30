@@ -405,20 +405,17 @@ class ChildDashboardFragment : Fragment() {
 
         // 🔹 RTDB'ye yaz (her uygulama için) - Akıllı veri birleştirme ile
         authViewModel.currentUser.value?.let { user ->
-            usageList.forEach { appUsage ->
-                val safePackageName = appUsage.packageName.replace(".", "_")
-                val appUsageToSave = appUsage.copy(
-                    userId = user.id,
-                    id = "${user.id}_$safePackageName",
-                    lastUsed = System.currentTimeMillis()
-                )
-                Log.d("talha", "Firebase'e yazılıyor: $appUsageToSave")
-                lifecycleScope.launch {
-                    try {
-                        // Mevcut veriyi al ve günlük maksimum kullanım ile birleştir
-                        val existingUsage = appUsageViewModel.getAppUsageByPackage(user.id, appUsage.packageName)
-                        val finalAppUsage = if (existingUsage != null) {
-                            // Günlük toplam kullanım süresinin en büyük değerini al (kullanım geri gitmez)
+            // Firebase'den mevcut kullanım verilerini çek (limitleri dahil)
+            lifecycleScope.launch {
+                try {
+                    val existingUsageList = appUsageViewModel.getAppUsageByUser(user.id)
+                    Log.d("talha", "Firebase'den ${existingUsageList.size} uygulama verisi çekildi")
+                    
+                    // Kullanım verilerini Firebase verileriyle birleştir
+                    val mergedUsageList = usageList.map { appUsage ->
+                        val existingUsage = existingUsageList.find { it.packageName == appUsage.packageName }
+                        if (existingUsage != null) {
+                            // Mevcut veri var - limitleri koru ve kullanım süresini güncelle
                             val today = System.currentTimeMillis() / (24 * 60 * 60 * 1000)
                             val lastUsedDay = existingUsage.lastUsed / (24 * 60 * 60 * 1000)
                             
@@ -438,25 +435,42 @@ class ChildDashboardFragment : Fragment() {
                                 )
                             }
                         } else {
-                            appUsageToSave
+                            // Yeni uygulama - sadece kullanım verisi
+                            appUsage.copy(
+                                userId = user.id,
+                                id = "${user.id}_${appUsage.packageName.replace(".", "_")}",
+                                lastUsed = System.currentTimeMillis()
+                            )
                         }
-                        
-                        appUsageViewModel.saveAppUsage(finalAppUsage)
-                        Log.d("talha", "Firebase'e yazma başarılı: ${finalAppUsage.id} - ${finalAppUsage.usedTime}ms")
-                    } catch (e: Exception) {
-                        Log.e("talha", "Firebase'e yazma hatası: ${e.message}")
+                    }
+                    
+                    // Firebase'e güncellenmiş verileri yaz
+                    mergedUsageList.forEach { finalAppUsage ->
+                        try {
+                            appUsageViewModel.saveAppUsage(finalAppUsage)
+                            Log.d("talha", "Firebase'e yazma başarılı: ${finalAppUsage.id} - ${finalAppUsage.usedTime}ms, Limit: ${finalAppUsage.dailyLimit}ms")
+                        } catch (e: Exception) {
+                            Log.e("talha", "Firebase'e yazma hatası: ${e.message}")
+                        }
+                    }
+                    
+                    // UI'ya güncellenmiş verileri gönder (limitleri dahil)
+                    val sortedUsageList = mergedUsageList.sortedByDescending { it.usedTime }
+                    activity?.runOnUiThread {
+                        appUsageAdapter.submitList(sortedUsageList)
+                        Log.d("talha", "UI'ya ${sortedUsageList.size} uygulama yüklendi (limitler dahil)")
+                    }
+                    
+                } catch (e: Exception) {
+                    Log.e("talha", "Firebase'den veri çekme hatası: ${e.message}")
+                    // Hata durumunda sadece cihaz verilerini göster
+                    val sortedUsageList = usageList.sortedByDescending { it.usedTime }
+                    activity?.runOnUiThread {
+                        appUsageAdapter.submitList(sortedUsageList)
                     }
                 }
             }
         } ?: Log.e("talha", "Kullanıcı null, Firebase'e yazılamadı!")
-
-        // Kullanım süresine göre azalan şekilde sırala
-        val sortedUsageList = usageList.sortedByDescending { it.usedTime }
-
-        // Ana thread'de adapter'e bas
-        activity?.runOnUiThread {
-            appUsageAdapter.submitList(sortedUsageList)
-        }
     }
 
     // 🔹 Paket adından uygulama adını alma fonksiyonu

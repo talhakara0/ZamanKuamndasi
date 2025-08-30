@@ -59,6 +59,14 @@ class AppUsageViewModel @Inject constructor(
             }
         }
     }
+    
+    suspend fun getAppUsageByUser(userId: String): List<AppUsage> {
+        return try {
+            appUsageRepository.getAppUsageByUser(userId)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
 
     fun setDailyLimit(userId: String, packageName: String, appName: String, limitInMinutes: Int) {
         _loading.value = true
