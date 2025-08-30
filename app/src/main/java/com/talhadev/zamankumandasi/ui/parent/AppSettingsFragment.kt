@@ -47,12 +47,33 @@ class AppSettingsFragment : Fragment() {
         setupRecyclerView()
         observeAppUsage()
         observeChildren()
-        loadInstalledApps()
+        
+        // Eğer belirli bir çocuk için açıldıysa, o çocuğun uygulamalarını yükle
+        val childId = arguments?.getString("childId") ?: ""
+        if (childId.isNotEmpty()) {
+            appUsageViewModel.loadAppUsageByUser(childId)
+        } else {
+            loadInstalledApps()
+        }
     }
 
     private fun setupViews() {
         binding.toolbar.setNavigationOnClickListener {
             findNavController().navigateUp()
+        }
+        
+        // Eğer belirli bir çocuk için açıldıysa çocuk bilgilerini göster
+        val childId = arguments?.getString("childId") ?: ""
+        val childName = arguments?.getString("childName") ?: ""
+        val childEmail = arguments?.getString("childEmail") ?: ""
+        
+        if (childId.isNotEmpty()) {
+            binding.cardChildInfo.visibility = View.VISIBLE
+            binding.tvChildName.text = childName
+            binding.tvChildEmail.text = childEmail
+            
+            // Toolbar başlığını güncelle
+            binding.toolbar.title = "$childName - Uygulamalar"
         }
     }
 
@@ -73,10 +94,16 @@ class AppSettingsFragment : Fragment() {
     }
 
     private fun showSetLimitDialog(packageName: String, appName: String) {
-        // Önce çocuk seçimi dialog'u göster
-        showChildSelectionDialog { selectedChild ->
-            // Çocuk seçildikten sonra limit dialog'u göster
-            showLimitDialog(packageName, appName, selectedChild)
+        // Eğer belirli bir çocuk için açıldıysa, direkt o çocuk için limit dialog'u göster
+        val childId = arguments?.getString("childId") ?: ""
+        if (childId.isNotEmpty()) {
+            showLimitDialog(packageName, appName, childId)
+        } else {
+            // Önce çocuk seçimi dialog'u göster
+            showChildSelectionDialog { selectedChild ->
+                // Çocuk seçildikten sonra limit dialog'u göster
+                showLimitDialog(packageName, appName, selectedChild)
+            }
         }
     }
     
@@ -186,12 +213,37 @@ class AppSettingsFragment : Fragment() {
     }
 
     private fun observeAppUsage() {
+        // Yüklü uygulamaları observe et (genel kullanım için)
         appUsageViewModel.installedApps.observe(viewLifecycleOwner) { apps ->
-            if (apps.isNotEmpty()) {
-                binding.tvNoApps.visibility = View.GONE
-                appListAdapter.submitList(apps)
-            } else {
-                binding.tvNoApps.visibility = View.VISIBLE
+            val childId = arguments?.getString("childId") ?: ""
+            if (childId.isEmpty()) { // Sadece genel kullanım için
+                if (apps.isNotEmpty()) {
+                    binding.tvNoApps.visibility = View.GONE
+                    appListAdapter.submitList(apps)
+                } else {
+                    binding.tvNoApps.visibility = View.VISIBLE
+                }
+            }
+        }
+        
+        // Çocuğun kullandığı uygulamaları observe et
+        appUsageViewModel.appUsageList.observe(viewLifecycleOwner) { appUsageList ->
+            val childId = arguments?.getString("childId") ?: ""
+            if (childId.isNotEmpty()) { // Belirli bir çocuk için
+                if (appUsageList.isNotEmpty()) {
+                    binding.tvNoApps.visibility = View.GONE
+                    // AppUsage listesini AppInfo listesine dönüştür
+                    val appInfoList = appUsageList.map { usage ->
+                        com.talhadev.zamankumandasi.data.model.AppInfo(
+                            packageName = usage.packageName,
+                            appName = usage.appName
+                        )
+                    }
+                    appListAdapter.submitList(appInfoList)
+                } else {
+                    binding.tvNoApps.visibility = View.VISIBLE
+                    binding.tvNoApps.text = "Bu çocuk henüz uygulama kullanmamış"
+                }
             }
         }
         

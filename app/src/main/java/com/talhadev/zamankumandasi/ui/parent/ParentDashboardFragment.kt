@@ -94,10 +94,21 @@ class ParentDashboardFragment : Fragment() {
                 findNavController().navigate(R.id.action_parentDashboardFragment_to_childUsageDetailFragment, bundle)
             },
             onManageAppsClick = { child ->
-                // Çocuğun uygulamalarını yönet
+                // Çocuğun kullanım verilerini görüntüle - ChildUsageDetailFragment'a git
+                val bundle = android.os.Bundle().apply {
+                    putString("childId", child.id)
+                    putString("childEmail", child.email)
+                }
+                findNavController().navigate(R.id.action_parentDashboardFragment_to_childUsageDetailFragment, bundle)
             },
             onViewUsageClick = { child ->
-                // Çocuğun kullanım verilerini görüntüle
+                // Çocuğun uygulamalarını görüntüle - AppSettingsFragment'a git
+                val bundle = android.os.Bundle().apply {
+                    putString("childId", child.id)
+                    putString("childName", if (child.name.isNotEmpty()) child.name else "İsimsiz Çocuk")
+                    putString("childEmail", child.email)
+                }
+                findNavController().navigate(R.id.action_parentDashboardFragment_to_appSettingsFragment, bundle)
             },
             onEditNameClick = { child ->
                 showEditChildNameDialog(child)

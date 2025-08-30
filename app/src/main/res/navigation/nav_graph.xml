@@ -122,7 +122,25 @@
         android:id="@+id/appSettingsFragment"
         android:name="com.talhadev.zamankumandasi.ui.parent.AppSettingsFragment"
         android:label="Uygulama Ayarları"
-        tools:layout="@layout/fragment_app_settings" />
+        tools:layout="@layout/fragment_app_settings">
+        
+        <argument
+            android:name="childId"
+            app:argType="string"
+            android:defaultValue="" />
+            
+        <argument
+            android:name="childName"
+            app:argType="string"
+            android:defaultValue="" />
+            
+        <argument
+            android:name="childEmail"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
+
+
 
     <fragment
         android:id="@+id/purchaseFragment"
