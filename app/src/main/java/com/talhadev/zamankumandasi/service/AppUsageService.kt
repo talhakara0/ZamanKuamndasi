@@ -33,7 +33,7 @@ class AppUsageService : Service() {
     companion object {
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "app_usage_service"
-    private const val TRACKING_INTERVAL = 15000L // 15 saniye
+    private const val TRACKING_INTERVAL = 2000L // 2 saniye - çok daha sık kontrol
     }
 
     override fun onCreate() {
@@ -57,13 +57,22 @@ class AppUsageService : Service() {
         isTracking = true
         startForeground(NOTIFICATION_ID, createNotification())
         
+        android.util.Log.d("AppUsageService", "🚀 USAGE TRACKING BAŞLADI!")
         serviceScope.launch {
             while (isTracking) {
-                trackAppUsage()
-                enforceLimits()
-                delay(TRACKING_INTERVAL)
+                try {
+                    android.util.Log.d("AppUsageService", "🔄 Tracking döngüsü çalışıyor...")
+                    trackAppUsage()
+                    enforceLimits()
+                    delay(TRACKING_INTERVAL)
+                } catch (e: Exception) {
+                    android.util.Log.e("AppUsageService", "❌ Tracking hatası: ${e.message}")
+                    e.printStackTrace()
+                    delay(5000) // Hata durumunda 5 saniye bekle
+                }
             }
         }
+        android.util.Log.d("AppUsageService", "🔚 USAGE TRACKING DÖNGÜSÜ BİTTİ!")
     }
 
     private fun stopTracking() {
@@ -118,6 +127,18 @@ class AppUsageService : Service() {
                                     stats.totalTimeInForeground // İlk kez kayıt
                                 }
                             )
+                            
+                            // Çocuk hesabı için anında limit kontrolü
+                            if (user.userType == com.talhadev.zamankumandasi.data.model.UserType.CHILD) {
+                                val updatedUsage = appUsageRepository.getAppUsageByPackage(user.id, stats.packageName)
+                                if (updatedUsage != null && 
+                                    updatedUsage.dailyLimit > 0 && 
+                                    updatedUsage.usedTime >= updatedUsage.dailyLimit) {
+                                    // Limit aşıldı, hemen engelle
+                                    forceGoHome()
+                                    launchBlocker(stats.packageName, appName, "Ebeveynin belirlediği günlük süre sınırı aşıldı")
+                                }
+                            }
                         }
                     }
                 }
@@ -131,9 +152,11 @@ class AppUsageService : Service() {
 
     private suspend fun enforceLimits() {
         try {
+            android.util.Log.d("AppUsageService", "🔍 ENFORCE LIMITS BAŞLADI")
+            
             val usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
             val endTime = System.currentTimeMillis()
-            val startTime = endTime - 60_000 // son 1 dakika olayları yeterli
+            val startTime = endTime - 5_000 // son 5 saniye - çok kısa zaman aralığı
 
             val events = usageStatsManager.queryEvents(startTime, endTime)
             var lastForegroundPackage: String? = null
@@ -142,23 +165,85 @@ class AppUsageService : Service() {
                 events.getNextEvent(event)
                 if (event.eventType == android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED) {
                     lastForegroundPackage = event.packageName
+                    android.util.Log.d("AppUsageService", "📱 Tespit edilen uygulama: $lastForegroundPackage")
                 }
             }
 
-            val currentPackage = lastForegroundPackage ?: return
+            val currentPackage = lastForegroundPackage ?: run {
+                android.util.Log.d("AppUsageService", "❌ Hiçbir uygulama tespit edilmedi")
+                return
+            }
 
-            val user = authRepository.getCurrentUser() ?: return
-            val usage = appUsageRepository.getAppUsageByPackage(user.id, currentPackage) ?: return
+            android.util.Log.d("AppUsageService", "🎯 Kontrol edilen uygulama: $currentPackage")
+
+            val user = authRepository.getCurrentUser() ?: run {
+                android.util.Log.d("AppUsageService", "❌ Kullanıcı bulunamadı")
+                return
+            }
+            
+            android.util.Log.d("AppUsageService", "👤 Kullanıcı tipi: ${user.userType}")
+            
+            val usage = appUsageRepository.getAppUsageByPackage(user.id, currentPackage) ?: run {
+                android.util.Log.d("AppUsageService", "❌ Uygulama usage bilgisi bulunamadı: $currentPackage")
+                return
+            }
+            
+            android.util.Log.d("AppUsageService", "📊 Uygulama: ${usage.appName}, Limit: ${usage.dailyLimit}, Kullanılan: ${usage.usedTime}")
 
             // Ebeveyn tarafından belirlenen limit kontrolü - sadece çocuk hesapları için
             if (user.userType == com.talhadev.zamankumandasi.data.model.UserType.CHILD) {
+                android.util.Log.d("AppUsageService", "🧒 ÇOCUK HESABI tespit edildi")
+                
+                val isOurApp = isOurPackage(currentPackage)
+                android.util.Log.d("AppUsageService", "🏠 Kendi uygulamamız mı? $isOurApp")
+                
+                val hasLimit = usage.dailyLimit > 0
+                val limitExceeded = usage.usedTime >= usage.dailyLimit
+                
+                android.util.Log.d("AppUsageService", "⏰ Limit var mı? $hasLimit")
+                android.util.Log.d("AppUsageService", "🚫 Limit aşıldı mı? $limitExceeded (${usage.usedTime} >= ${usage.dailyLimit})")
+                
                 // Ebeveyn limitlerini kontrol et
                 if (usage.dailyLimit > 0 && usage.usedTime >= usage.dailyLimit && !isOurPackage(currentPackage)) {
+                    
+                    android.util.Log.d("AppUsageService", "🚨 LİMİT AŞILDI - HEMEN ENGELLE: $currentPackage")
+                    android.util.Log.d("AppUsageService", "💥 ENGELLEME BAŞLIYOR...")
+                    
+                    // NÜKLEER UYGULAMA KİLL SİSTEMİ
+                    android.util.Log.d("AppUsageService", "💥 NÜKLEER UYGULAMA KİLL SİSTEMİ BAŞLIYOR!")
+                    
+                    // 1. Önce uygulamayı KİLL et
+                    killApp(currentPackage)
+                    
+                    // 2. Sonra 10 kez ana ekrana dön
+                    repeat(10) {
+                        android.util.Log.d("AppUsageService", "🏠 Ana ekrana dönüyor... (${it + 1}/10)")
+                        forceGoHome()
+                        delay(200) // 0.2 saniye bekle - daha hızlı
+                    }
+                    
+                    // 3. Tekrar uygulamayı KİLL et
+                    delay(1000)
+                    killApp(currentPackage)
+                    
+                    android.util.Log.d("AppUsageService", "🛡️ Blocker başlatılıyor...")
                     launchBlocker(currentPackage, usage.appName, "Ebeveynin belirlediği günlük süre sınırı aşıldı")
+                    
+                    // Blocker'dan sonra tekrar ana ekrana dön
+                    delay(1000)
+                    android.util.Log.d("AppUsageService", "🏠 Son ana ekrana dönüş...")
+                    forceGoHome()
+                } else {
+                    android.util.Log.d("AppUsageService", "✅ Uygulama engellenmiyor - şartlar sağlanmıyor")
+                    if (usage.dailyLimit <= 0) android.util.Log.d("AppUsageService", "   - Limit belirlenmemiş")
+                    if (usage.usedTime < usage.dailyLimit) android.util.Log.d("AppUsageService", "   - Limit henüz aşılmamış")
+                    if (isOurPackage(currentPackage)) android.util.Log.d("AppUsageService", "   - Kendi uygulamamız")
                 }
             } else {
+                android.util.Log.d("AppUsageService", "👨‍👩‍👧‍👦 EBEVEYN HESABI tespit edildi")
                 // Ebeveyn hesapları için normal limit kontrolü
                 if (usage.dailyLimit > 0 && usage.usedTime >= usage.dailyLimit && !isOurPackage(currentPackage)) {
+                    forceGoHome()
                     launchBlocker(currentPackage, usage.appName, "Günlük süre sınırı aşıldı")
                 }
             }
@@ -167,7 +252,66 @@ class AppUsageService : Service() {
         }
     }
 
+    private fun forceGoHome() {
+        try {
+            android.util.Log.d("AppUsageService", "💪 GÜÇLÜ ANA EKRANA DÖNÜŞ BAŞLADI")
+            
+            // 1. Önce normal ana ekrana dön
+            val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_HOME)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                        Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                        Intent.FLAG_ACTIVITY_NO_ANIMATION or
+                        Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+            }
+            startActivity(homeIntent)
+            
+            // 2. Hemen ardından tekrar ana ekrana dön (çifte vuruş)
+            Thread.sleep(100)
+            startActivity(homeIntent)
+            
+            // 3. Son olarak tekrar ana ekrana dön (üçlü vuruş)
+            Thread.sleep(100)
+            startActivity(homeIntent)
+            
+            android.util.Log.d("AppUsageService", "💪 GÜÇLÜ ANA EKRANA DÖNÜŞ TAMAMLANDI")
+            
+        } catch (e: Exception) {
+            android.util.Log.e("AppUsageService", "❌ Ana ekrana dönüş hatası: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+
     private fun isOurPackage(pkg: String): Boolean = pkg == packageName
+
+    private fun killApp(packageName: String) {
+        try {
+            android.util.Log.d("AppUsageService", "💀 NÜKLEER UYGULAMA KİLL BAŞLIYOR: $packageName")
+            
+            // 1. ActivityManager ile uygulamayı kapat
+            val am = getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+            am.killBackgroundProcesses(packageName)
+            
+            // 2. Tekrar kill background processes
+            am.killBackgroundProcesses(packageName)
+            
+            // 3. Hemen tekrar kill
+            Thread.sleep(200)
+            am.killBackgroundProcesses(packageName)
+            
+            // 4. Son kez kill
+            Thread.sleep(200)
+            am.killBackgroundProcesses(packageName)
+            
+            android.util.Log.d("AppUsageService", "✅ NÜKLEER UYGULAMA KİLL TAMAMLANDI: $packageName")
+            
+        } catch (e: Exception) {
+            android.util.Log.e("AppUsageService", "❌ Uygulama kill hatası: ${e.message}")
+            e.printStackTrace()
+        }
+    }
 
     private fun launchBlocker(packageName: String, appName: String, reason: String = "Günlük süre sınırı aşıldı") {
         val intent = Intent(this, BlockerActivity::class.java).apply {
@@ -208,5 +352,5 @@ class AppUsageService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
-    }
+      }
 }

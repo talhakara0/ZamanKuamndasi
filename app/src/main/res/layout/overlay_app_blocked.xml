@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#E0000000"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="32dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/permission_item_background"
+        android:orientation="vertical"
+        android:padding="32dp"
+        android:gravity="center">
+
+        <!-- Engellendi ikonu -->
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Uygulama adı -->
+        <TextView
+            android:id="@+id/tvBlockedAppName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Uygulama engellendi"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Engelleme nedeni -->
+        <TextView
+            android:id="@+id/tvBlockReason"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Günlük kullanım süreniz doldu"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:gravity="center"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Ana ekrana dön butonu -->
+        <Button
+            android:id="@+id/btnGoHome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ana Ekrana Dön"
+            android:textSize="16sp"
+            android:backgroundTint="@color/design_default_color_primary" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bu mesaj 3 saniye sonra otomatik kapanacak"
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:gravity="center"
+            android:layout_marginTop="16dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

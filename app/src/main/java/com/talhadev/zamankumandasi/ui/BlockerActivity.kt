@@ -22,13 +22,46 @@ class BlockerActivity : AppCompatActivity() {
         binding.tvTitle.text = "$appName engellendi"
         binding.tvReason.text = reason
 
-        binding.btnHome.setOnClickListener {
-            // Ana ekrana dön
-            val homeIntent = Intent(Intent.ACTION_MAIN).apply {
-                addCategory(Intent.CATEGORY_HOME)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        // SÜPER GÜÇLÜ OTOMATİK ANA EKRANA DÖNÜŞ (1 saniye sonra)
+        binding.btnHome.postDelayed({
+            android.util.Log.d("BlockerActivity", "🚀 OTOMATİK ANA EKRANA DÖNÜŞ BAŞLIYOR!")
+            
+            // 5 kez ana ekrana dön
+            repeat(5) {
+                val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+                    addCategory(Intent.CATEGORY_HOME)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                            Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                            Intent.FLAG_ACTIVITY_NO_ANIMATION or
+                            Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+                }
+                startActivity(homeIntent)
+                Thread.sleep(100) // 0.1 saniye bekle
             }
-            startActivity(homeIntent)
+            
+            android.util.Log.d("BlockerActivity", "✅ OTOMATİK ANA EKRANA DÖNÜŞ TAMAMLANDI!")
+            finish()
+        }, 1000) // 1 saniye sonra
+
+        binding.btnHome.setOnClickListener {
+            android.util.Log.d("BlockerActivity", "🔘 ANA EKRANA DÖN BUTONU TIKLANDI!")
+            
+            // SÜPER GÜÇLÜ ANA EKRANA DÖNÜŞ
+            repeat(5) {
+                val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+                    addCategory(Intent.CATEGORY_HOME)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                            Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                            Intent.FLAG_ACTIVITY_NO_ANIMATION or
+                            Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+                }
+                startActivity(homeIntent)
+                Thread.sleep(100) // 0.1 saniye bekle
+            }
             finish()
         }
 

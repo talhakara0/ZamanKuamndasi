@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">ZamanKumandasi</string>
+    <string name="accessibility_service_description">Bu servis, çocuk hesaplarında limit dolmuş uygulamaları engellemek için gereklidir. Uygulama kullanımını takip eder ve limit aşıldığında uygulamayı kapatır.</string>
+    <string name="accessibility_service_name">ZamanKumandasi Uygulama Engelleme</string>
+    <string name="ultimate_accessibility_service_description">Çocuk hesaplarında limit dolmuş uygulamaları engellemek için gerekli. Bu servis, uygulama değişikliklerini takip eder ve limit aşıldığında anında engeller.</string>
 </resources>

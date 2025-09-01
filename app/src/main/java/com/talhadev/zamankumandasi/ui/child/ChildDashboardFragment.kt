@@ -29,6 +29,8 @@ import com.talhadev.zamankumandasi.ui.adapter.AppUsageAdapter
 import com.talhadev.zamankumandasi.ui.viewmodel.AppUsageViewModel
 import com.talhadev.zamankumandasi.ui.viewmodel.AuthViewModel
 import com.talhadev.zamankumandasi.utils.SimpleLogout
+import com.talhadev.zamankumandasi.util.PermissionHelper
+import com.talhadev.zamankumandasi.ui.PermissionCheckDialog
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -554,6 +556,12 @@ class ChildDashboardFragment : Fragment() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Her resume'da izinleri kontrol et
+        checkPermissionsOnResume()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -608,6 +616,20 @@ class ChildDashboardFragment : Fragment() {
         } catch (e: Exception) {
             Log.d("talha", "Usage Access hatası: ${e.message}")
             e.printStackTrace()
+        }
+    }
+
+    private fun checkPermissionsOnResume() {
+        val permissionStatus = PermissionHelper.checkAllRequiredPermissions(requireContext())
+        
+        if (!permissionStatus.allGranted) {
+            // Tüm izinler verilmemişse dialog göster
+            PermissionCheckDialog.newInstance {
+                // İzinler verildiğinde çalışacak callback
+                Log.d("ChildDashboard", "Tüm izinler verildi!")
+                // Servisi yeniden başlat
+                startAppUsageService()
+            }.show(childFragmentManager, "PermissionCheckDialog")
         }
     }
 

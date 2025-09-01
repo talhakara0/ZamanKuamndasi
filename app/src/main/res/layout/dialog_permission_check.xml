@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- Başlık -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="İzin Kontrolü"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Açıklama -->
+        <TextView
+            android:id="@+id/tvDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Uygulama engelleme sisteminin çalışması için aşağıdaki izinlerin verilmesi gerekiyor:"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:gravity="center"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Kullanım İstatistikleri -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            android:background="@drawable/permission_item_background"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:id="@+id/ivUsageStats"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="16dp" />
+
+            <TextView
+                android:id="@+id/tvUsageStats"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Kullanım istatistikleri izni"
+                android:textSize="16sp"
+                android:textColor="@color/black" />
+
+            <Button
+                android:id="@+id/btnUsageStats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ayarla"
+                android:textSize="14sp"
+                android:backgroundTint="@color/design_default_color_primary" />
+        </LinearLayout>
+
+        <!-- Overlay İzni -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            android:background="@drawable/permission_item_background"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:id="@+id/ivAccessibility"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="16dp" />
+
+            <TextView
+                android:id="@+id/tvAccessibility"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Overlay izni"
+                android:textSize="16sp"
+                android:textColor="@color/black" />
+
+            <Button
+                android:id="@+id/btnAccessibility"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ayarla"
+                android:textSize="14sp"
+                android:backgroundTint="@color/design_default_color_primary" />
+        </LinearLayout>
+
+        <!-- Battery Optimizasyonu -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            android:background="@drawable/permission_item_background"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:id="@+id/ivBattery"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="16dp" />
+
+            <TextView
+                android:id="@+id/tvBattery"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Battery optimizasyonu"
+                android:textSize="16sp"
+                android:textColor="@color/black" />
+
+            <Button
+                android:id="@+id/btnBattery"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ayarla"
+                android:textSize="14sp"
+                android:backgroundTint="@color/design_default_color_primary" />
+        </LinearLayout>
+
+        <!-- Erişilebilirlik Servisi Yardım Metni -->
+        <TextView
+            android:id="@+id/tvAccessibilityHelp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="💡 Yardım: Erişilebilirlik servisi etkinleştirilemiyorsa:\n1. Ayarlar > Erişilebilirlik'e gidin\n2. 'ZamanKumandasi Uygulama Engelleme' servisini bulun\n3. Yanındaki switch'i açın\n4. 'Tamam' butonuna tıklayın\n5. Bazı cihazlarda ek güvenlik onayı gerekebilir"
+            android:textSize="14sp"
+            android:textColor="@color/design_default_color_secondary"
+            android:background="@drawable/permission_item_background"
+            android:padding="16dp"
+            android:layout_marginBottom="24dp"
+            android:visibility="gone" />
+
+        <!-- Butonlar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/btnRefresh"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Yenile"
+                android:textSize="16sp"
+                android:layout_marginEnd="16dp"
+                android:backgroundTint="@color/design_default_color_secondary" />
+
+            <Button
+                android:id="@+id/btnContinue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Devam Et"
+                android:textSize="16sp"
+                android:backgroundTint="@color/design_default_color_primary" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
