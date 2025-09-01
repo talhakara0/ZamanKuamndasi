@@ -33,12 +33,14 @@ object PermissionHelper {
     // Overlay izni kontrolü (Erişilebilirlik servisi yerine)
     fun hasOverlayPermission(context: Context): Boolean {
         val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Settings.canDrawOverlays(context)
+            val result = Settings.canDrawOverlays(context)
+            Log.d("PermissionHelper", "Overlay izni kontrolü: $result (Android ${Build.VERSION.SDK_INT})")
+            result
         } else {
+            Log.d("PermissionHelper", "Overlay izni kontrolü: true (Android ${Build.VERSION.SDK_INT} - gerekmez)")
             true // Android 6.0 altında izin gerekmez
         }
         
-        Log.d("PermissionHelper", "Overlay izni kontrolü: $hasPermission")
         return hasPermission
     }
     
@@ -74,18 +76,23 @@ object PermissionHelper {
     // Tüm gerekli izinler kontrolü
     fun checkAllRequiredPermissions(context: Context): PermissionStatus {
         val usageStats = hasUsageStatsPermission(context)
-        val overlay = hasOverlayPermission(context)
+        val overlay = hasOverlayPermission(context) // Overlay izni gerçek kontrol
         val accessibility = isAccessibilityServiceEnabled(context)
         val batteryOptimization = isIgnoringBatteryOptimizations(context)
         
         Log.d("PermissionHelper", "Permission check - Usage: $usageStats, Overlay: $overlay, Accessibility: $accessibility, Battery: $batteryOptimization")
         
+        // Temel izinler (Usage Stats, Overlay, Battery) - Accessibility opsiyonel
+        val essentialPermissions = usageStats && overlay && batteryOptimization
+        val allGranted = essentialPermissions // Accessibility'yi zorunlu kılmayın
+        Log.d("PermissionHelper", "Essential permissions granted: $essentialPermissions (Accessibility optional: $accessibility)")
+        
         return PermissionStatus(
             usageStats = usageStats,
-            overlay = overlay, // Overlay izni eklendi
+            overlay = overlay, // Overlay izni gerçek kontrol
             accessibility = accessibility, // Gerçek accessibility service kontrolü
             batteryOptimization = batteryOptimization,
-            allGranted = usageStats && overlay && accessibility && batteryOptimization
+            allGranted = allGranted // Sadece temel izinler zorunlu
         )
     }
     
@@ -137,6 +144,18 @@ object PermissionHelper {
                 Log.e("PermissionHelper", "App settings de açılamadı: ${e2.message}")
                 openGeneralSettings(context)
             }
+        }
+    }
+    
+    // Accessibility Service ayarlarına yönlendirme
+    fun openAccessibilitySettings(context: Context) {
+        try {
+            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("PermissionHelper", "Accessibility settings açılamadı: ${e.message}")
+            openGeneralSettings(context)
         }
     }
     

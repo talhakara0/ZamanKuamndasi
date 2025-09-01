@@ -33,6 +33,11 @@ class MainActivity : AppCompatActivity() {
     private var inScreenAdRunnable: Runnable? = null
     private val UI_STAY_DELAY_MS = 45_000L // 45 saniye ekranda kalınca bir kez dene
     
+    // State management variables
+    private var permissionsChecked = false
+    private var isPermissionDialogShowing = false
+    private var hasNavigatedToChild = false
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -80,26 +85,12 @@ class MainActivity : AppCompatActivity() {
                                 navController.navigate(R.id.action_loginFragment_to_pairingFragment)
                                 if (!user.isPremium) AdManager.maybeShowInterstitial(this)
                             } else {
-                                navController.navigate(R.id.action_loginFragment_to_childDashboardFragment)
-                                if (!user.isPremium) AdManager.maybeShowInterstitial(this)
-                                
-                                // Çocuk hesabı için tüm izinleri kontrol et
-                                checkAllRequiredPermissions()
-                                
-                                // WorkManager'ı başlat
-                                AppLimitCheckWorker.startPeriodicWork(this)
-                                
-                                // OverlayBlockerService'i başlat
-                                startOverlayBlockerService()
-                                
-                                // AntiBypassService'i başlat (En agresif koruma)
-                                startAntiBypassService()
-                                
-                                // NuclearBombService'i başlat (NÜKLEER SEVİYE KORUMA)
-                                startNuclearBombService()
-                                
-                                // UltimateBlockerAccessibilityService'i başlat (%100 KESİN ÇÖZÜM)
-                                startUltimateBlockerService()
+                                // Child hesabı için navigation'ı geciktir ve izin kontrolü sonrası yap
+                                android.util.Log.d("talha", "Child user tespit edildi - izin kontrolü yapılacak")
+                                hasNavigatedToChild = false
+                                permissionsChecked = false
+                                // Child dashboard navigation'ı izin kontrolü sonrası yapılacak
+                                checkAllRequiredPermissionsForChild()
                             }
                         }
                     }
@@ -118,12 +109,12 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         scheduleInScreenAd()
         
-        // Overlay izni kontrolü - uygulama geri geldiğinde
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            if (Settings.canDrawOverlays(this)) {
-                android.util.Log.d("MainActivity", "onResume: Overlay izni mevcut!")
-                // İzinler tamam mı kontrol et
-                checkAllRequiredPermissions()
+        // İzinleri sadece child hesabı için kontrol et ve sadece bir kez
+        if (!permissionsChecked && !hasNavigatedToChild) {
+            val currentUser = authViewModel.currentUser.value
+            if (currentUser?.userType == UserType.CHILD && currentUser.parentId != null) {
+                android.util.Log.d("MainActivity", "onResume: Child hesabı için izinler kontrol ediliyor...")
+                checkAllRequiredPermissionsForChild()
             }
         }
     }
@@ -133,35 +124,42 @@ class MainActivity : AppCompatActivity() {
         cancelInScreenAd()
     }
 
-    private fun checkAllRequiredPermissions() {
+    private fun checkAllRequiredPermissionsForChild() {
+        // Eğer dialog zaten görünüyorsa veya child'a zaten navigate edildiyse, tekrar kontrol etme
+        if (isPermissionDialogShowing || hasNavigatedToChild) {
+            android.util.Log.d("MainActivity", "Permission dialog açık veya zaten navigate edildi - atlanıyor")
+            return
+        }
+        
+        // Kullanıcı tipini kontrol et - sadece child hesaplar için
+        val currentUser = authViewModel.currentUser.value
+        if (currentUser?.userType != UserType.CHILD || currentUser.parentId == null) {
+            android.util.Log.d("MainActivity", "Child hesabı değil - izin kontrolü atlanıyor")
+            return
+        }
+        
+        permissionsChecked = true
         val permissionStatus = PermissionHelper.checkAllRequiredPermissions(this)
         
+        android.util.Log.d("MainActivity", "İzin durumu kontrol edildi: Usage=${permissionStatus.usageStats}, Overlay=${permissionStatus.overlay}, Accessibility=${permissionStatus.accessibility}, Battery=${permissionStatus.batteryOptimization}, AllGranted=${permissionStatus.allGranted}")
+        
         if (!permissionStatus.allGranted) {
-            android.util.Log.d("MainActivity", "İzinler eksik - kontrol ediliyor")
+            android.util.Log.d("MainActivity", "Bazı izinler eksik - dialog gösteriliyor")
+            isPermissionDialogShowing = true
             
-            // Overlay izni özel kontrolü
-            if (!permissionStatus.overlay) {
-                requestOverlayPermission()
-            } else {
-                // Diğer izinler için dialog göster
-                PermissionCheckDialog.newInstance {
-                    android.util.Log.d("MainActivity", "Tüm izinler verildi!")
-                }.show(supportFragmentManager, "PermissionCheckDialog")
-            }
+            PermissionCheckDialog.newInstance {
+                android.util.Log.d("MainActivity", "Permission callback alındı - izinler verildi!")
+                isPermissionDialogShowing = false
+                
+                // İzinler verildikten sonra child dashboard'a git
+                navigateToChildDashboardSafely()
+                startAllChildServices()
+            }.show(supportFragmentManager, "PermissionCheckDialog")
         } else {
-            android.util.Log.d("MainActivity", "Tüm izinler zaten verilmiş!")
-        }
-    }
-
-    private fun requestOverlayPermission() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            if (!Settings.canDrawOverlays(this)) {
-                val intent = Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    android.net.Uri.parse("package:$packageName")
-                )
-                startActivityForResult(intent, OVERLAY_PERMISSION_REQUEST_CODE)
-            }
+            android.util.Log.d("MainActivity", "Tüm izinler mevcut - direkt child dashboard'a gidiliyor")
+            // Tüm izinler var, direkt child dashboard'a git
+            navigateToChildDashboardSafely()
+            startAllChildServices()
         }
     }
 
@@ -169,31 +167,87 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         
         if (requestCode == OVERLAY_PERMISSION_REQUEST_CODE) {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                if (Settings.canDrawOverlays(this)) {
-                    android.util.Log.d("MainActivity", "Overlay izni verildi!")
-                    
-                    // Kısa bir bekleme sonrası yeniden kontrol et
-                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                        android.util.Log.d("MainActivity", "Overlay izni yeniden kontrol ediliyor...")
-                        checkAllRequiredPermissions()
-                    }, 1000) // 1 saniye bekle
-                    
-                } else {
-                    android.util.Log.d("MainActivity", "Overlay izni reddedildi!")
-                    // Kullanıcıya uyarı göster
-                    android.widget.Toast.makeText(
-                        this,
-                        "Overlay izni gerekli! Lütfen izin verin ve uygulamayı yeniden başlatın.",
-                        android.widget.Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
+            android.util.Log.d("MainActivity", "Overlay izni ayarlarından dönüldü")
+            // onActivityResult'tan izin kontrolü yapma - PermissionCheckDialog kendi yönetir
         }
     }
 
     companion object {
         private const val OVERLAY_PERMISSION_REQUEST_CODE = 1234
+    }
+
+    private fun navigateToChildDashboardSafely() {
+        if (hasNavigatedToChild) {
+            android.util.Log.d("MainActivity", "Zaten child dashboard'a navigate edildi - tekrar yapılmıyor")
+            return
+        }
+        
+        android.util.Log.d("MainActivity", "Child dashboard'a güvenli navigation başlatılıyor...")
+        
+        try {
+            val navHostFragment = supportFragmentManager
+                .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+            val navController = navHostFragment.navController
+            
+            val currentDestination = navController.currentDestination?.id
+            android.util.Log.d("MainActivity", "Mevcut destination: $currentDestination")
+            
+            // Eğer zaten child dashboard'daysa, işaretleyelim ve çıkalım
+            if (currentDestination == R.id.childDashboardFragment) {
+                android.util.Log.d("MainActivity", "Zaten child dashboard'da")
+                hasNavigatedToChild = true
+                return
+            }
+            
+            // Navigation yap
+            when (currentDestination) {
+                R.id.loginFragment -> {
+                    android.util.Log.d("MainActivity", "Login'den child dashboard'a navigate ediliyor")
+                    navController.navigate(R.id.action_loginFragment_to_childDashboardFragment)
+                    hasNavigatedToChild = true
+                }
+                else -> {
+                    android.util.Log.d("MainActivity", "Bilinmeyen destination'dan child dashboard'a navigate ediliyor")
+                    // Önce login'e git, sonra child dashboard'a
+                    navController.navigate(R.id.loginFragment)
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        try {
+                            navController.navigate(R.id.action_loginFragment_to_childDashboardFragment)
+                            hasNavigatedToChild = true
+                        } catch (e: Exception) {
+                            android.util.Log.e("MainActivity", "Delayed navigation hatası: ${e.message}")
+                        }
+                    }, 200)
+                }
+            }
+            
+            android.util.Log.d("MainActivity", "Child dashboard navigation tamamlandı")
+            
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "navigateToChildDashboardSafely hatası: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+
+    private fun startAllChildServices() {
+        android.util.Log.d("MainActivity", "Çocuk hesabı için tüm servisler başlatılıyor...")
+        
+        // WorkManager'ı başlat
+        AppLimitCheckWorker.startPeriodicWork(this)
+        
+        // OverlayBlockerService'i başlat
+        startOverlayBlockerService()
+        
+        // AntiBypassService'i başlat (En agresif koruma)
+        startAntiBypassService()
+        
+        // NuclearBombService'i başlat (NÜKLEER SEVİYE KORUMA)
+        startNuclearBombService()
+        
+        // UltimateBlockerAccessibilityService'i başlat (%100 KESİN ÇÖZÜM)
+        startUltimateBlockerService()
+        
+        android.util.Log.d("MainActivity", "Tüm child servisleri başlatıldı!")
     }
 
     private fun startOverlayBlockerService() {
@@ -235,22 +289,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showAccessibilityServiceDialog() {
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Erişilebilirlik Servisi Gerekli")
-            .setMessage("Çocuk hesaplarında limit dolmuş uygulamaları engellemek için Erişilebilirlik servisini etkinleştirmeniz gerekiyor.")
-            .setPositiveButton("Ayarları Aç") { _, _ ->
-                AccessibilityHelper.openAccessibilitySettings(this)
-            }
-            .setNegativeButton("Daha Sonra") { _, _ -> }
-            .setCancelable(false)
-            .show()
-    }
-
     private fun scheduleInScreenAd() {
         cancelInScreenAd()
         // Premium ise hiçbir zaman planlama yapma
-    if (AdManager.isPremiumEnabled()) return
+        if (AdManager.isPremiumEnabled()) return
         inScreenAdRunnable = Runnable {
             if (authViewModel.currentUser.value?.isPremium != true) {
                 AdManager.maybeShowInterstitial(this)

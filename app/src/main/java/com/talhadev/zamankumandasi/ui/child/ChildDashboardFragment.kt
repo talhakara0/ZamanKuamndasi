@@ -558,8 +558,8 @@ class ChildDashboardFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // Her resume'da izinleri kontrol et
-        checkPermissionsOnResume()
+        // İzin kontrolü kaldırıldı - sadece bir kez MainActivity'de yapılıyor
+        Log.d("ChildDashboard", "onResume - İzin kontrolü yapılmıyor")
     }
 
     override fun onDestroyView() {
@@ -619,19 +619,7 @@ class ChildDashboardFragment : Fragment() {
         }
     }
 
-    private fun checkPermissionsOnResume() {
-        val permissionStatus = PermissionHelper.checkAllRequiredPermissions(requireContext())
-        
-        if (!permissionStatus.allGranted) {
-            // Tüm izinler verilmemişse dialog göster
-            PermissionCheckDialog.newInstance {
-                // İzinler verildiğinde çalışacak callback
-                Log.d("ChildDashboard", "Tüm izinler verildi!")
-                // Servisi yeniden başlat
-                startAppUsageService()
-            }.show(childFragmentManager, "PermissionCheckDialog")
-        }
-    }
+    // İzin kontrolü kaldırıldı - sadece MainActivity'de yapılıyor
 
     private fun hasUsageStatsPermission(context: Context): Boolean {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as android.app.AppOpsManager
