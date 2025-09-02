@@ -75,24 +75,42 @@ object PermissionHelper {
 
     // Tüm gerekli izinler kontrolü
     fun checkAllRequiredPermissions(context: Context): PermissionStatus {
+        Log.i("PermissionHelper", "🔍 İZİN KONTROLÜ BAŞLADI - TÜM İZİNLER KONTROL EDİLİYOR...")
+        
         val usageStats = hasUsageStatsPermission(context)
-        val overlay = hasOverlayPermission(context) // Overlay izni gerçek kontrol
+        Log.d("PermissionHelper", "📊 Usage Stats kontrolü: $usageStats")
+        
+        val overlay = hasOverlayPermission(context)
+        Log.d("PermissionHelper", "🖼️ Overlay kontrolü: $overlay")
+        
         val accessibility = isAccessibilityServiceEnabled(context)
+        Log.d("PermissionHelper", "♿ Accessibility kontrolü: $accessibility")
+        
         val batteryOptimization = isIgnoringBatteryOptimizations(context)
+        Log.d("PermissionHelper", "🔋 Battery Optimization kontrolü: $batteryOptimization")
         
-        Log.d("PermissionHelper", "Permission check - Usage: $usageStats, Overlay: $overlay, Accessibility: $accessibility, Battery: $batteryOptimization")
+        // TÜM İZİNLER ZORUNLU - Hiçbiri opsiyonel değil!
+        val allGranted = usageStats && overlay && accessibility && batteryOptimization
         
-        // Temel izinler (Usage Stats, Overlay, Battery) - Accessibility opsiyonel
-        val essentialPermissions = usageStats && overlay && batteryOptimization
-        val allGranted = essentialPermissions // Accessibility'yi zorunlu kılmayın
-        Log.d("PermissionHelper", "Essential permissions granted: $essentialPermissions (Accessibility optional: $accessibility)")
+        Log.i("PermissionHelper", "🎯 SONUÇ - Usage: $usageStats, Overlay: $overlay, Accessibility: $accessibility, Battery: $batteryOptimization")
+        Log.i("PermissionHelper", "🎯 TÜM İZİNLER VERİLDİ Mİ? $allGranted")
+        
+        if (!allGranted) {
+            Log.w("PermissionHelper", "⚠️ EKSİK İZİNLER TESPİT EDİLDİ!")
+            if (!usageStats) Log.w("PermissionHelper", "❌ Usage Stats izni eksik")
+            if (!overlay) Log.w("PermissionHelper", "❌ Overlay izni eksik")
+            if (!accessibility) Log.w("PermissionHelper", "❌ Accessibility Service izni eksik")
+            if (!batteryOptimization) Log.w("PermissionHelper", "❌ Battery Optimization izni eksik")
+        } else {
+            Log.i("PermissionHelper", "✅ TÜM İZİNLER VERİLDİ!")
+        }
         
         return PermissionStatus(
             usageStats = usageStats,
-            overlay = overlay, // Overlay izni gerçek kontrol
-            accessibility = accessibility, // Gerçek accessibility service kontrolü
+            overlay = overlay,
+            accessibility = accessibility,
             batteryOptimization = batteryOptimization,
-            allGranted = allGranted // Sadece temel izinler zorunlu
+            allGranted = allGranted // TÜM İZİNLER ZORUNLU
         )
     }
     

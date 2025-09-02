@@ -66,31 +66,55 @@ class ChildDashboardFragment : Fragment() {
         // Eşleşme durumunu sıfırla (önceki ekranlardan kalan değerleri temizle)
         authViewModel.clearPairingState()
 
+        // İZİN KONTROLÜ - TÜM İZİNLER VERİLMEDEN DEVAM ETME!
+        checkAllRequiredPermissions()
+
         setupViews()
         setupRecyclerView()
         observeCurrentUser()
         observeAuthState()
         observeAppUsage()
-
-        if (!hasUsageStatsPermission(requireContext())) {
-            Log.d("talha", "Kullanım izni yok, ayarlara yönlendiriliyor")
-            val intent = Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(intent)
-            Toast.makeText(
-                requireContext(),
-                "Uygulama kullanım izni vermelisiniz!",
-                Toast.LENGTH_LONG
-            ).show()
-        } else {
-            Log.d("talha", "Kullanım izni var, servis başlatılıyor")
-            startAppUsageService()
-        }
-        
-
     }
 
-    
+    /**
+     * Tüm gerekli izinleri kontrol eder ve eksik izinler varsa izin isteyen sekmeye yönlendirir
+     */
+    private fun checkAllRequiredPermissions() {
+        Log.i("ChildDashboard", "🔍 İZİN KONTROLÜ BAŞLADI - TÜM İZİNLER KONTROL EDİLİYOR...")
+        
+        val permissionStatus = PermissionHelper.checkAllRequiredPermissions(requireContext())
+        
+        Log.i("ChildDashboard", "📊 İZİN DURUMU:")
+        Log.i("ChildDashboard", "📊 Usage Stats: ${permissionStatus.usageStats}")
+        Log.i("ChildDashboard", "🖼️ Overlay: ${permissionStatus.overlay}")
+        Log.i("ChildDashboard", "♿ Accessibility: ${permissionStatus.accessibility}")
+        Log.i("ChildDashboard", "🔋 Battery: ${permissionStatus.batteryOptimization}")
+        Log.i("ChildDashboard", "🎯 TÜM İZİNLER VERİLDİ Mİ? ${permissionStatus.allGranted}")
+        
+        if (!permissionStatus.allGranted) {
+            Log.w("ChildDashboard", "⚠️ EKSİK İZİNLER TESPİT EDİLDİ - İZİN İSTEYEN SEKMEYE YÖNLENDİRİLİYOR!")
+            
+            // Eksik izinler varsa izin isteyen sekmeye yönlendir
+            showPermissionDialog()
+        } else {
+            Log.i("ChildDashboard", "✅ TÜM İZİNLER VERİLDİ - NORMAL DEVAM EDİLİYOR")
+            // Tüm izinler var, normal işlemlere devam et
+            startAppUsageService()
+        }
+    }
+
+    /**
+     * İzin dialog'unu gösterir ve eksik izinleri ister
+     */
+    private fun showPermissionDialog() {
+        Log.i("ChildDashboard", "🔘 İZİN DIALOG'U GÖSTERİLİYOR...")
+        
+        PermissionCheckDialog.newInstance {
+            Log.i("ChildDashboard", "✅ İZİNLER VERİLDİ - SERVİS BAŞLATILIYOR")
+            // İzinler verildikten sonra servis başlat
+            startAppUsageService()
+        }.show(parentFragmentManager, "ChildDashboardPermissionDialog")
+    }
 
     private fun setupViews() {
         // Toolbar'ı Activity'ye set et
@@ -558,8 +582,17 @@ class ChildDashboardFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // İzin kontrolü kaldırıldı - sadece bir kez MainActivity'de yapılıyor
-        Log.d("ChildDashboard", "onResume - İzin kontrolü yapılmıyor")
+        Log.i("ChildDashboard", "🔄 onResume - İZİN KONTROLÜ YAPILIYOR...")
+        
+        // Her onResume'de izin kontrolü yap - eksik izinler varsa dialog göster
+        val permissionStatus = PermissionHelper.checkAllRequiredPermissions(requireContext())
+        
+        if (!permissionStatus.allGranted) {
+            Log.w("ChildDashboard", "⚠️ onResume: EKSİK İZİNLER TESPİT EDİLDİ!")
+            showPermissionDialog()
+        } else {
+            Log.i("ChildDashboard", "✅ onResume: TÜM İZİNLER VERİLDİ")
+        }
     }
 
     override fun onDestroyView() {
@@ -621,21 +654,5 @@ class ChildDashboardFragment : Fragment() {
 
     // İzin kontrolü kaldırıldı - sadece MainActivity'de yapılıyor
 
-    private fun hasUsageStatsPermission(context: Context): Boolean {
-        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as android.app.AppOpsManager
-        val mode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            appOps.unsafeCheckOpNoThrow(
-                "android:get_usage_stats",
-                android.os.Process.myUid(),
-                context.packageName
-            )
-        } else {
-            appOps.checkOpNoThrow(
-                "android:get_usage_stats",
-                android.os.Process.myUid(),
-                context.packageName
-            )
-        }
-        return mode == android.app.AppOpsManager.MODE_ALLOWED
-    }
+
 }

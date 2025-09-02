@@ -7,6 +7,7 @@ import android.app.Service
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
@@ -16,6 +17,7 @@ import com.talhadev.zamankumandasi.data.repository.AuthRepository
 import com.talhadev.zamankumandasi.ui.BlockerActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
+import java.util.*
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -29,16 +31,20 @@ class AppUsageService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var isTracking = false
+    private lateinit var sharedPreferences: SharedPreferences
 
     companion object {
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "app_usage_service"
-    private const val TRACKING_INTERVAL = 2000L // 2 saniye - çok daha sık kontrol
+        private const val TRACKING_INTERVAL = 2000L // 2 saniye - çok daha sık kontrol
+        private const val PREFS_NAME = "app_usage_service_prefs"
+        private const val KEY_LAST_RESET_DATE = "last_reset_date"
     }
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -62,6 +68,10 @@ class AppUsageService : Service() {
             while (isTracking) {
                 try {
                     android.util.Log.d("AppUsageService", "🔄 Tracking döngüsü çalışıyor...")
+                    
+                    // Günlük reset kontrolü
+                    checkAndResetDailyUsage()
+                    
                     trackAppUsage()
                     enforceLimits()
                     delay(TRACKING_INTERVAL)
@@ -79,6 +89,64 @@ class AppUsageService : Service() {
         isTracking = false
         stopForeground(true)
         stopSelf()
+    }
+
+    /**
+     * Günlük kullanım sürelerini kontrol eder ve gerekirse sıfırlar
+     * Her gece 00:00'da çalışır
+     */
+    private suspend fun checkAndResetDailyUsage() {
+        try {
+            val calendar = Calendar.getInstance()
+            val currentDate = calendar.get(Calendar.DAY_OF_YEAR)
+            val currentYear = calendar.get(Calendar.YEAR)
+            
+            // Son reset tarihini al
+            val lastResetDate = sharedPreferences.getInt(KEY_LAST_RESET_DATE, -1)
+            val lastResetYear = sharedPreferences.getInt("${KEY_LAST_RESET_DATE}_year", -1)
+            
+            // Eğer bugün reset yapılmamışsa veya farklı yıldaysa reset yap
+            if (lastResetDate != currentDate || lastResetYear != currentYear) {
+                android.util.Log.d("AppUsageService", "🔄 GÜNLÜK RESET GEREKLİ! Son reset: $lastResetDate/$lastResetYear, Bugün: $currentDate/$currentYear")
+                resetAllDailyUsage()
+                
+                // Reset tarihini kaydet
+                sharedPreferences.edit()
+                    .putInt(KEY_LAST_RESET_DATE, currentDate)
+                    .putInt("${KEY_LAST_RESET_DATE}_year", currentYear)
+                    .apply()
+                    
+                android.util.Log.d("AppUsageService", "✅ GÜNLÜK RESET TAMAMLANDI!")
+            } else {
+                android.util.Log.d("AppUsageService", "✅ Günlük reset gerekmiyor - bugün zaten reset yapılmış")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("AppUsageService", "❌ Günlük reset kontrolü hatası: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+
+    /**
+     * Tüm kullanıcıların günlük kullanım sürelerini sıfırlar
+     */
+    private suspend fun resetAllDailyUsage() {
+        try {
+            android.util.Log.d("AppUsageService", "🔄 TÜM GÜNLÜK KULLANIM SÜRELERİ SIFIRLANIYOR...")
+            
+            // Mevcut kullanıcıyı al
+            val currentUser = authRepository.getCurrentUser()
+            currentUser?.let { user ->
+                // Kullanıcının tüm uygulama kullanımlarını sıfırla
+                appUsageRepository.resetDailyUsage(user.id)
+                android.util.Log.d("AppUsageService", "✅ Kullanıcı ${user.id} için günlük kullanım süreleri sıfırlandı")
+            }
+            
+            android.util.Log.d("AppUsageService", "🎉 TÜM GÜNLÜK KULLANIM SÜRELERİ BAŞARIYLA SIFIRLANDI!")
+            
+        } catch (e: Exception) {
+            android.util.Log.e("AppUsageService", "❌ Günlük kullanım sıfırlama hatası: ${e.message}")
+            e.printStackTrace()
+        }
     }
 
     private suspend fun trackAppUsage() {

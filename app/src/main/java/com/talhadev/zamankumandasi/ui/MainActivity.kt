@@ -75,6 +75,17 @@ class MainActivity : AppCompatActivity() {
                     android.util.Log.d("talha", "Otomatik yönlendirme yapılıyor: ${user.userType}")
                     // Premium durumunu reklam yöneticisine ilet
                     AdManager.setPremium(user.isPremium)
+                    
+                    // İlk kurulumda tüm kullanıcılar için izin kontrolü yap - HER ZAMAN KONTROL ET!
+                    android.util.Log.i("MainActivity", "🚀 KULLANICI GİRİŞ YAPTI!")
+                    android.util.Log.i("MainActivity", "👤 Kullanıcı: ${user.userType}")
+                    android.util.Log.i("MainActivity", "🔍 permissionsChecked: $permissionsChecked")
+                    android.util.Log.i("MainActivity", "🔍 İZİN KONTROLÜ BAŞLATILIYOR...")
+                    
+                    // Her zaman izin kontrolü yap - test için
+                    checkAllRequiredPermissionsForAllUsers(user)
+                    return@observe
+                    
                     when (user.userType) {
                         UserType.PARENT -> {
                             navController.navigate(R.id.action_loginFragment_to_parentDashboardFragment)
@@ -109,19 +120,76 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         scheduleInScreenAd()
         
-        // İzinleri sadece child hesabı için kontrol et ve sadece bir kez
-        if (!permissionsChecked && !hasNavigatedToChild) {
-            val currentUser = authViewModel.currentUser.value
-            if (currentUser?.userType == UserType.CHILD && currentUser.parentId != null) {
-                android.util.Log.d("MainActivity", "onResume: Child hesabı için izinler kontrol ediliyor...")
-                checkAllRequiredPermissionsForChild()
-            }
+        // İzinleri tüm kullanıcı tipleri için kontrol et - HER ZAMAN KONTROL ET!
+        val currentUser = authViewModel.currentUser.value
+        if (currentUser != null) {
+            android.util.Log.i("MainActivity", "🔄 onResume: İZİN KONTROLÜ TETİKLENDİ!")
+            android.util.Log.i("MainActivity", "👤 Kullanıcı: ${currentUser.userType}")
+            android.util.Log.i("MainActivity", "🔍 permissionsChecked: $permissionsChecked")
+            
+            // Her zaman izin kontrolü yap - test için
+            checkAllRequiredPermissionsForAllUsers(currentUser)
+        } else {
+            android.util.Log.i("MainActivity", "❌ onResume: Kullanıcı null - izin kontrolü atlanıyor")
         }
     }
 
     override fun onPause() {
         super.onPause()
         cancelInScreenAd()
+    }
+
+    override fun onBackPressed() {
+        // İzinler verilmeden geri tuşu ile çıkışı engelle
+        if (!permissionsChecked) {
+            android.util.Log.d("MainActivity", "İzinler verilmeden geri tuşu ile çıkış engellendi")
+            // Geri tuşu işlevini devre dışı bırak
+            return
+        }
+        super.onBackPressed()
+    }
+
+    /**
+     * Tüm kullanıcı tipleri için ilk kurulumda izin kontrolü yapar
+     * İzinler verilmeden uygulamaya erişimi tamamen engeller
+     */
+    private fun checkAllRequiredPermissionsForAllUsers(user: com.talhadev.zamankumandasi.data.model.User) {
+        // Eğer dialog zaten görünüyorsa, tekrar kontrol etme
+        if (isPermissionDialogShowing) {
+            android.util.Log.w("MainActivity", "⚠️ Permission dialog zaten açık - atlanıyor")
+            return
+        }
+        
+        android.util.Log.i("MainActivity", "🔍 İZİN KONTROLÜ BAŞLADI - TÜM İZİNLER KONTROL EDİLİYOR...")
+        val permissionStatus = PermissionHelper.checkAllRequiredPermissions(this)
+        
+        android.util.Log.i("MainActivity", "🔍 İLK KURULUM İZİN KONTROLÜ SONUCU:")
+        android.util.Log.i("MainActivity", "📊 Usage Stats: ${permissionStatus.usageStats}")
+        android.util.Log.i("MainActivity", "🖼️ Overlay: ${permissionStatus.overlay}")
+        android.util.Log.i("MainActivity", "♿ Accessibility: ${permissionStatus.accessibility}")
+        android.util.Log.i("MainActivity", "🔋 Battery: ${permissionStatus.batteryOptimization}")
+        android.util.Log.i("MainActivity", "🎯 TÜM İZİNLER VERİLDİ Mİ? ${permissionStatus.allGranted}")
+        
+        // İZİNLER VERİLMEDEN UYGULAMAYA ERİŞİMİ TAMAMEN ENGELLE
+        if (!permissionStatus.allGranted) {
+            android.util.Log.w("MainActivity", "⚠️ EKSİK İZİNLER TESPİT EDİLDİ - ZORUNLU DIALOG GÖSTERİLİYOR!")
+            isPermissionDialogShowing = true
+            
+            // permissionsChecked'i sadece izinler verildikten sonra true yap
+            PermissionCheckDialog.newInstance {
+                android.util.Log.i("MainActivity", "✅ İlk kurulum izin callback alındı - izinler verildi!")
+                isPermissionDialogShowing = false
+                permissionsChecked = true // İzinler verildikten sonra işaretle
+                
+                // İzinler verildikten sonra kullanıcı tipine göre yönlendir
+                navigateUserAfterPermissions(user)
+            }.show(supportFragmentManager, "InitialPermissionCheckDialog")
+        } else {
+            android.util.Log.i("MainActivity", "✅ İlk kurulumda tüm izinler mevcut - direkt yönlendirme yapılıyor")
+            permissionsChecked = true // İzinler zaten var, işaretle
+            // Tüm izinler var, direkt kullanıcı tipine göre yönlendir
+            navigateUserAfterPermissions(user)
+        }
     }
 
     private fun checkAllRequiredPermissionsForChild() {
@@ -160,6 +228,39 @@ class MainActivity : AppCompatActivity() {
             // Tüm izinler var, direkt child dashboard'a git
             navigateToChildDashboardSafely()
             startAllChildServices()
+        }
+    }
+
+    /**
+     * İzinler verildikten sonra kullanıcı tipine göre yönlendirme yapar
+     */
+    private fun navigateUserAfterPermissions(user: com.talhadev.zamankumandasi.data.model.User) {
+        try {
+            val navHostFragment = supportFragmentManager
+                .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+            val navController = navHostFragment.navController
+            
+            when (user.userType) {
+                UserType.PARENT -> {
+                    android.util.Log.d("MainActivity", "İzinler verildi - Parent dashboard'a yönlendiriliyor")
+                    navController.navigate(R.id.action_loginFragment_to_parentDashboardFragment)
+                    if (!user.isPremium) AdManager.maybeShowInterstitial(this)
+                }
+                UserType.CHILD -> {
+                    if (user.parentId == null) {
+                        android.util.Log.d("MainActivity", "İzinler verildi - Pairing ekranına yönlendiriliyor")
+                        navController.navigate(R.id.action_loginFragment_to_pairingFragment)
+                        if (!user.isPremium) AdManager.maybeShowInterstitial(this)
+                    } else {
+                        android.util.Log.d("MainActivity", "İzinler verildi - Child dashboard'a yönlendiriliyor")
+                        navigateToChildDashboardSafely()
+                        startAllChildServices()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "navigateUserAfterPermissions hatası: ${e.message}")
+            e.printStackTrace()
         }
     }
 
