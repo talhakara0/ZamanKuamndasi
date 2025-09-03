@@ -21,10 +21,42 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            // Release keystore dosyası oluşturulacak
+            storeFile = file("../release-keystore.jks")
+            storePassword = "zamankumandasi2024"
+            keyAlias = "zamankumandasi"
+            keyPassword = "zamankumandasi2024"
+        }
+    }
+    
     buildTypes {
         release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            isDebuggable = false
+            isJniDebuggable = false
+            isRenderscriptDebuggable = false
+            isPseudoLocalesEnabled = false
+            isZipAlignEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"), 
+                "proguard-rules.pro"
+            )
+            signingConfig = signingConfigs.getByName("release")
+            
+            // APK boyutunu daha da küçültmek için
+            ndk {
+                debugSymbolLevel = "NONE"
+            }
+        }
+        debug {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            isDebuggable = true
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            isShrinkResources = false
         }
     }
     compileOptions {
@@ -42,6 +74,35 @@ android {
     kapt {
         correctErrorTypes = true
         useBuildCache = true
+    }
+    
+    // APK boyutunu optimize et
+    packagingOptions {
+        resources {
+            excludes += setOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt",
+                "META-INF/ASL2.0",
+                "META-INF/*.kotlin_module",
+                "META-INF/gradle/incremental.annotation.processors"
+            )
+        }
+    }
+    
+    // Bundle boyutunu optimize et
+    bundle {
+        language {
+            enableSplit = true
+        }
+        density {
+            enableSplit = true
+        }
+        abi {
+            enableSplit = true
+        }
     }
 }
 

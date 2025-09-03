@@ -1,6 +1,12 @@
 <resources>
-    <string name="app_name">ZamanKumandasi</string>
+    <string name="app_name">Zaman Kumandasi</string>
     <string name="accessibility_service_description">Bu servis, çocuk hesaplarında limit dolmuş uygulamaları engellemek için gereklidir. Uygulama kullanımını takip eder ve limit aşıldığında uygulamayı kapatır.</string>
-    <string name="accessibility_service_name">ZamanKumandasi Uygulama Engelleme</string>
+    <string name="accessibility_service_name">Zaman Kumandasi Uygulama Engelleme</string>
     <string name="ultimate_accessibility_service_description">Çocuk hesaplarında limit dolmuş uygulamaları engellemek için gerekli. Bu servis, uygulama değişikliklerini takip eder ve limit aşıldığında anında engeller.</string>
+    
+    <!-- Play Store için ek stringler -->
+    <string name="app_short_description">Çocukların ekran süresini kontrol eden akıllı uygulama</string>
+    <string name="app_full_description">Zaman Kumandasi, ebeveynlerin çocuklarının ekran süresini etkili bir şekilde yönetmesini sağlayan kapsamlı bir uygulamadır. Uygulama kullanım limitleri, gerçek zamanlı takip ve güçlü engelleme özellikleri ile çocukların dijital dünyada güvenli kalmasını sağlar.</string>
+    <string name="privacy_policy_url">https://zamankumandasi.com/privacy</string>
+    <string name="support_email">support@zamankumandasi.com</string>
 </resources>

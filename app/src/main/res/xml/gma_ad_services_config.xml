@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ad-services-config>
+    <!-- AdMob için gerekli yapılandırma -->
+    <ad-services-config>
+        <measurement>
+            <ad-id-permission>GRANTED</ad-id-permission>
+        </measurement>
+    </ad-services-config>
+</ad-services-config>
+

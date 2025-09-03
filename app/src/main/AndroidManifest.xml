@@ -31,6 +31,25 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-2463753967736908~1434575327" />
         
+        <!-- Play Store için meta-data -->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+        
+        <!-- Uygulama kategorisi -->
+        <meta-data
+            android:name="android.app.category"
+            android:value="EDUCATION" />
+        
+        <!-- Destek bilgileri -->
+        <meta-data
+            android:name="android.support.PRIVACY_POLICY_URL"
+            android:value="@string/privacy_policy_url" />
+        
+        <meta-data
+            android:name="android.support.SUPPORT_EMAIL"
+            android:value="@string/support_email" />
+        
         <activity
             android:name="com.talhadev.zamankumandasi.ui.MainActivity"
             android:exported="true"
