@@ -1,14 +1,14 @@
 {
   "project_info": {
-    "project_number": "703308822913",
-    "firebase_url": "https://zamankumandasi-default-rtdb.firebaseio.com",
-    "project_id": "zamankumandasi",
-    "storage_bucket": "zamankumandasi.firebasestorage.app"
+    "project_number": "1092398830433",
+    "firebase_url": "https://zamankumandasi-440cd-default-rtdb.firebaseio.com",
+    "project_id": "zamankumandasi-440cd",
+    "storage_bucket": "zamankumandasi-440cd.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:703308822913:android:237105232f4cd03084d080",
+        "mobilesdk_app_id": "1:1092398830433:android:51171fe037f341a8156b20",
         "android_client_info": {
           "package_name": "com.talhadev.zamankumandasi"
         }
@@ -16,7 +16,26 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC1-6lq9pWqDJY8_Gvp1K905ymwuwVQl5Q"
+          "current_key": "AIzaSyA7XDAJFedDpENgoa7amTgql7Kst1WAQzg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1092398830433:android:d3b608c872d48679156b20",
+        "android_client_info": {
+          "package_name": "com.talhadev.zamankumandasi.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7XDAJFedDpENgoa7amTgql7Kst1WAQzg"
         }
       ],
       "services": {
