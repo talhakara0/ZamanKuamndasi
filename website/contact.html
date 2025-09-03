@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İletişim - Zaman Kumandası</title>
+    <meta name="description" content="Zaman Kumandası ile iletişime geçin - destek, geri bildirim ve işbirliği">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #2196F3;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            color: #2196F3;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            color: #2196F3;
+            margin-bottom: 10px;
+        }
+        
+        h2 {
+            color: #1976D2;
+            margin: 30px 0 15px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+        
+        .contact-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .contact-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .contact-icon {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+        
+        .contact-card h3 {
+            color: #2196F3;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .contact-card p {
+            color: #555;
+            margin-bottom: 10px;
+        }
+        
+        .contact-card a {
+            color: #2196F3;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .contact-card a:hover {
+            text-decoration: underline;
+        }
+        
+        .response-time {
+            background: #e3f2fd;
+            color: #1976D2;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        
+        .contact-form {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            border: 1px solid #dee2e6;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1976D2;
+            font-weight: bold;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+        
+        .form-group textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        
+        .submit-btn {
+            background: #2196F3;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            width: 100%;
+        }
+        
+        .submit-btn:hover {
+            background: #1976D2;
+        }
+        
+        .company-info {
+            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 30px 0;
+            border: 1px solid #a5d6a7;
+        }
+        
+        .company-info h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            background: #2196F3;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 30px;
+            transition: background 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: #1976D2;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .logo {
+                font-size: 1.5rem;
+            }
+            
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .contact-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">⏰ Zaman Kumandası</div>
+            <h1>✉️ İletişim</h1>
+            <p>Bizimle iletişime geçmekten çekinmeyin!</p>
+        </div>
+
+        <div class="contact-grid">
+            <div class="contact-card">
+                <span class="contact-icon">📧</span>
+                <h3>E-posta Desteği</h3>
+                <p>Teknik destek, geri bildirim ve genel sorular için</p>
+                <a href="mailto:support@zamankumandasi.com">support@zamankumandasi.com</a>
+                <div class="response-time">⏰ 24-48 saat yanıt</div>
+            </div>
+            
+            <div class="contact-card">
+                <span class="contact-icon">🚨</span>
+                <h3>Acil Destek</h3>
+                <p>Kritik güvenlik sorunları ve acil teknik problemler</p>
+                <a href="mailto:urgent@zamankumandasi.com">urgent@zamankumandasi.com</a>
+                <div class="response-time">🔥 2-6 saat yanıt</div>
+            </div>
+            
+            <div class="contact-card">
+                <span class="contact-icon">💼</span>
+                <h3>İş Ortaklığı</h3>
+                <p>İşbirliği, pazarlama ve ticari fırsatlar</p>
+                <a href="mailto:business@zamankumandasi.com">business@zamankumandasi.com</a>
+                <div class="response-time">📈 1-3 gün yanıt</div>
+            </div>
+            
+            <div class="contact-card">
+                <span class="contact-icon">📱</span>
+                <h3>Uygulama İçi Destek</h3>
+                <p>Doğrudan uygulama üzerinden hızlı destek</p>
+                <p><strong>Ayarlar > Destek > İletişim</strong></p>
+                <div class="response-time">⚡ Anlık yanıt</div>
+            </div>
+            
+            <div class="contact-card">
+                <span class="contact-icon">🛡️</span>
+                <h3>Gizlilik & Güvenlik</h3>
+                <p>Veri koruma ve gizlilik ile ilgili sorular</p>
+                <a href="mailto:privacy@zamankumandasi.com">privacy@zamankumandasi.com</a>
+                <div class="response-time">🔒 24 saat yanıt</div>
+            </div>
+            
+            <div class="contact-card">
+                <span class="contact-icon">💡</span>
+                <h3>Öneriler & Geri Bildirim</h3>
+                <p>Yeni özellik önerileri ve iyileştirme fikirleri</p>
+                <a href="mailto:feedback@zamankumandasi.com">feedback@zamankumandasi.com</a>
+                <div class="response-time">🎯 1-7 gün yanıt</div>
+            </div>
+        </div>
+
+        <div class="contact-form">
+            <h2>📝 Hızlı İletişim Formu</h2>
+            <p style="margin-bottom: 25px; color: #666;">Bu formu kullanarak bize doğrudan mesaj gönderebilirsiniz. E-posta adresinizi doğru yazdığınızdan emin olun.</p>
+            
+            <form action="mailto:support@zamankumandasi.com" method="post" enctype="text/plain">
+                <div class="form-group">
+                    <label for="name">👤 Adınız</label>
+                    <input type="text" id="name" name="name" required placeholder="Adınızı yazın">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">📧 E-posta Adresiniz</label>
+                    <input type="email" id="email" name="email" required placeholder="email@ornek.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">📂 Konu Kategorisi</label>
+                    <select id="category" name="category" required>
+                        <option value="">Kategori seçin</option>
+                        <option value="technical">🔧 Teknik Destek</option>
+                        <option value="feature">💡 Özellik Önerisi</option>
+                        <option value="bug">🐛 Hata Bildirimi</option>
+                        <option value="account">👤 Hesap Sorunu</option>
+                        <option value="privacy">🔒 Gizlilik Sorunu</option>
+                        <option value="business">💼 İş Ortaklığı</option>
+                        <option value="other">❓ Diğer</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="subject">📋 Konu Başlığı</label>
+                    <input type="text" id="subject" name="subject" required placeholder="Mesajınızın konusu">
+                </div>
+                
+                <div class="form-group">
+                    <label for="message">💬 Mesajınız</label>
+                    <textarea id="message" name="message" required placeholder="Lütfen sorununuzu veya önerinizi detaylı olarak açıklayın..."></textarea>
+                </div>
+                
+                <button type="submit" class="submit-btn">📤 Mesajı Gönder</button>
+            </form>
+            
+            <p style="margin-top: 15px; color: #666; font-size: 0.9rem;">
+                ⚠️ Not: Bu form size varsayılan e-posta uygulamanızı açacaktır. Alternatif olarak yukarıdaki e-posta adreslerini kullanabilirsiniz.
+            </p>
+        </div>
+
+        <div class="company-info">
+            <h3>🏢 Şirket Bilgileri</h3>
+            <p><strong>🏷️ Uygulama Adı:</strong> Zaman Kumandası</p>
+            <p><strong>📦 Package Name:</strong> com.talhadev.zamankumandasi</p>
+            <p><strong>🌐 Web Sitesi:</strong> <a href="/" style="color: #2e7d32;">zamankumandasi.com</a></p>
+            <p><strong>🔐 Gizlilik Politikası:</strong> <a href="/privacy" style="color: #2e7d32;">zamankumandasi.com/privacy</a></p>
+            <p><strong>📞 Destek:</strong> <a href="/support" style="color: #2e7d32;">zamankumandasi.com/support</a></p>
+        </div>
+
+        <h2>🚀 Hızlı Yardım İpuçları</h2>
+        <div style="background: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0; border: 1px solid #ffcc02;">
+            <p><strong>💡 Daha hızlı destek için:</strong></p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>🔍 Önce <a href="/support" style="color: #f57c00;">Destek sayfamızdaki</a> SSS bölümünü kontrol edin</li>
+                <li>📱 Cihaz modelinizi ve Android versiyonunuzu belirtin</li>
+                <li>🔧 Aldığınız hata mesajını tam olarak kopyalayın</li>
+                <li>📷 Mümkünse ekran görüntüsü ekleyin</li>
+                <li>🔄 Hangi adımları denediğinizi yazın</li>
+            </ul>
+        </div>
+
+        <h2>⏰ Destek Saatleri ve Yanıt Süreleri</h2>
+        <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div>
+                    <strong>📧 Genel Destek</strong><br>
+                    <span style="color: #2e7d32;">24-48 saat</span>
+                </div>
+                <div>
+                    <strong>🚨 Acil Durumlar</strong><br>
+                    <span style="color: #d32f2f;">2-6 saat</span>
+                </div>
+                <div>
+                    <strong>🔒 Gizlilik Sorunları</strong><br>
+                    <span style="color: #1976d2;">24 saat</span>
+                </div>
+                <div>
+                    <strong>💼 İş Ortaklığı</strong><br>
+                    <span style="color: #7b1fa2;">1-3 gün</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="/" class="back-link">🏠 Ana Sayfaya Dön</a>
+        </div>
+    </div>
+</body>
+</html>

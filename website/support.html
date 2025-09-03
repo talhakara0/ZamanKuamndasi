@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Destek - Zaman Kumandası</title>
+    <meta name="description" content="Zaman Kumandası uygulaması için teknik destek ve yardım">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #2196F3;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            color: #2196F3;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            color: #2196F3;
+            margin-bottom: 10px;
+        }
+        
+        h2 {
+            color: #1976D2;
+            margin: 30px 0 15px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .support-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .support-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            transition: transform 0.3s ease;
+        }
+        
+        .support-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .support-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .support-card h3 {
+            color: #2196F3;
+            margin-bottom: 10px;
+        }
+        
+        .faq-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .faq-question {
+            font-weight: bold;
+            color: #1976D2;
+            margin-bottom: 10px;
+        }
+        
+        .faq-answer {
+            color: #555;
+        }
+        
+        .contact-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .contact-method {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid #90caf9;
+        }
+        
+        .contact-method h4 {
+            color: #1976D2;
+            margin-bottom: 10px;
+        }
+        
+        .contact-method a {
+            color: #2196F3;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .contact-method a:hover {
+            text-decoration: underline;
+        }
+        
+        .back-link {
+            display: inline-block;
+            background: #2196F3;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 30px;
+            transition: background 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: #1976D2;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .logo {
+                font-size: 1.5rem;
+            }
+            
+            .support-grid, .contact-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">⏰ Zaman Kumandası</div>
+            <h1>📞 Destek Merkezi</h1>
+            <p>Size yardımcı olmak için buradayız!</p>
+        </div>
+
+        <div class="support-grid">
+            <div class="support-card">
+                <div class="support-icon">🚀</div>
+                <h3>Hızlı Başlangıç</h3>
+                <p>Uygulamayı kurmak ve ilk ayarları yapmak için adım adım rehber</p>
+            </div>
+            
+            <div class="support-card">
+                <div class="support-icon">❓</div>
+                <h3>Sık Sorulan Sorular</h3>
+                <p>En çok merak edilen soruların cevapları</p>
+            </div>
+            
+            <div class="support-card">
+                <div class="support-icon">🛠️</div>
+                <h3>Teknik Destek</h3>
+                <p>Teknik problemler için uzman yardımı</p>
+            </div>
+            
+            <div class="support-card">
+                <div class="support-icon">📧</div>
+                <h3>İletişim</h3>
+                <p>Doğrudan bizimle iletişime geçin</p>
+            </div>
+        </div>
+
+        <h2>❓ Sık Sorulan Sorular</h2>
+        
+        <div class="faq-item">
+            <div class="faq-question">🔧 Uygulamayı nasıl kurarım?</div>
+            <div class="faq-answer">
+                1. Google Play Store'dan uygulamayı indirin<br>
+                2. Uygulamayı açın ve gerekli izinleri verin<br>
+                3. "Usage Access" iznini aktifleştirin<br>
+                4. Çocuk profilini oluşturun<br>
+                5. Uygulama limitlerini ayarlayın
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">🚫 Uygulama engelleme çalışmıyor, ne yapmalıyım?</div>
+            <div class="faq-answer">
+                1. "Usage Access" izninin açık olduğundan emin olun<br>
+                2. "System Alert Window" iznini kontrol edin<br>
+                3. Accessibility servisini aktifleştirin<br>
+                4. Cihazı yeniden başlatın<br>
+                5. Problem devam ederse bize yazın
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">⏰ Zaman limitleri nasıl ayarlanır?</div>
+            <div class="faq-answer">
+                1. Ana ekrandan "Uygulama Listesi"ne gidin<br>
+                2. Limit koymak istediğiniz uygulamayı seçin<br>
+                3. "Günlük Limit" bölümünden süreyi ayarlayın<br>
+                4. "Kaydet" butonuna tıklayın<br>
+                5. Değişiklikler hemen uygulanır
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">💎 Premium özellikleri nelerdir?</div>
+            <div class="faq-answer">
+                • Reklamsız deneyim<br>
+                • Çoklu çocuk profili<br>
+                • Gelişmiş raporlama<br>
+                • Haftalık/aylık limitler<br>
+                • Öncelikli destek<br>
+                • Gelişmiş engelleme sistemleri
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">🔒 Verilerim güvende mi?</div>
+            <div class="faq-answer">
+                Evet! Tüm verileriniz:<br>
+                • Şifrelenerek saklanır<br>
+                • Sadece cihazınızda tutulur<br>
+                • Üçüncü taraflarla paylaşılmaz<br>
+                • GDPR ve KVKK uyumludur<br>
+                • İstediğiniz zaman silebilirsiniz
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">📱 Hangi cihazlarda çalışır?</div>
+            <div class="faq-answer">
+                • Android 7.0 ve üzeri tüm cihazlar<br>
+                • Telefon ve tablet desteği<br>
+                • Minimum 2GB RAM<br>
+                • 50MB depolama alanı<br>
+                • İnternet bağlantısı (isteğe bağlı)
+            </div>
+        </div>
+
+        <h2>📞 İletişim Yöntemleri</h2>
+        
+        <div class="contact-methods">
+            <div class="contact-method">
+                <h4>📧 E-posta Desteği</h4>
+                <p><a href="mailto:support@zamankumandasi.com">support@zamankumandasi.com</a></p>
+                <p>⏰ 24-48 saat içinde yanıt</p>
+            </div>
+            
+            <div class="contact-method">
+                <h4>📱 Uygulama İçi Destek</h4>
+                <p>Ayarlar > Destek > İletişim</p>
+                <p>⚡ Anlık destek talebi</p>
+            </div>
+            
+            <div class="contact-method">
+                <h4>🌐 Web Sitesi</h4>
+                <p><a href="/">zamankumandasi.com</a></p>
+                <p>📚 Kapsamlı dokümantasyon</p>
+            </div>
+            
+            <div class="contact-method">
+                <h4>🔄 Güncelleme Bildirimleri</h4>
+                <p>Google Play Store</p>
+                <p>🔔 Otomatik güncelleme</p>
+            </div>
+        </div>
+
+        <h2>🛠️ Yaygın Sorunlar ve Çözümleri</h2>
+        
+        <div class="faq-item">
+            <div class="faq-question">⚠️ "İzin gerekli" uyarısı alıyorum</div>
+            <div class="faq-answer">
+                Telefon Ayarları > Uygulamalar > Zaman Kumandası > İzinler bölümünden gerekli izinleri açın.
+                En önemli izinler: Usage Access, System Alert Window, Accessibility Service
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">🔄 Uygulama donuyor veya çöküyor</div>
+            <div class="faq-answer">
+                1. Uygulamayı kapatıp tekrar açın<br>
+                2. Cihazı yeniden başlatın<br>
+                3. Uygulamayı güncelleme var mı kontrol edin<br>
+                4. Cache temizliği yapın<br>
+                5. Problem devam ederse bize hata raporunu gönderin
+            </div>
+        </div>
+
+        <h2>📈 Destek Saatleri</h2>
+        <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <p><strong>🕐 E-posta Desteği:</strong> 7/24 mesaj kabul edilir, 24-48 saat içinde yanıt</p>
+            <p><strong>📱 Uygulama İçi Destek:</strong> Anlık otomatik yanıtlar</p>
+            <p><strong>🚨 Acil Durumlar:</strong> Kritik güvenlik sorunları için öncelikli destek</p>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="/" class="back-link">🏠 Ana Sayfaya Dön</a>
+        </div>
+    </div>
+</body>
+</html>

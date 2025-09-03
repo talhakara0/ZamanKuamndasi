@@ -44,7 +44,7 @@
         <!-- Destek bilgileri -->
         <meta-data
             android:name="android.support.PRIVACY_POLICY_URL"
-            android:value="@string/privacy_policy_url" />
+            android:value="https://talhakara0.github.io/zamankumandasi-privacy/privacy" />
         
         <meta-data
             android:name="android.support.SUPPORT_EMAIL"
