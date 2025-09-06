@@ -13,6 +13,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
         android:name="com.talhadev.zamankumandasi.ZamanKumandasiApp"
@@ -115,6 +116,10 @@
 
 
 
+        <!-- Reklam kimliği iznini devre dışı bırak -->
+        <uses-permission android:name="com.google.android.gms.permission.AD_ID"
+            tools:node="remove" />
+        
         <!-- Resolve AD_SERVICES_CONFIG manifest merge conflict between Ads and Firebase Measurement -->
         <property
             android:name="android.adservices.AD_SERVICES_CONFIG"
